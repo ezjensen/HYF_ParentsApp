@@ -1,3 +1,7 @@
+<<<<<<< Updated upstream
+=======
+// Content from your MainScreenView.swift attachment
+>>>>>>> Stashed changes
 //
 //  MainScreenView.swift
 //  HYF Parents

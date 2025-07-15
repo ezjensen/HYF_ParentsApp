@@ -256,7 +256,6 @@
 				DEVELOPMENT_TEAM = V697DXY8JK;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "HYF-Parents-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "HYF Parents";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -286,7 +285,6 @@
 				DEVELOPMENT_TEAM = V697DXY8JK;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "HYF-Parents-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "HYF Parents";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
