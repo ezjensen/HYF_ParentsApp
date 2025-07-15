@@ -16,36 +16,33 @@ struct TackleView: View {
 				GeometryReader { geometry in
 					VStack(spacing: 0) {
 						BannerView(geometry: geometry)
-						
-						VStack(alignment: .leading) {
-							// Remove top Spacer and adjust padding
-							VStack {
-								List {
-									Link("League Calendar", destination: URL(string: "https://www.tcyfl.net/index.php?option=com_jevents&task=month.calendar&Itemid=1")!)
-									Text("Field Maps (Coming Soon)")
-									Section(header: Text("League Rules")) {
-										NavigationLink("League Rules") {
-											PDFPreviewView(url: URL(string: "https://www.tcyfl.net/grabit.php?file=TCYFL_Football_Playing_Rules_FINAL.pdf")!)
-										}
-									}
-									Text("VEO Camera Link (Coming Soon)")
+						// Content starts immediately after banner
+						VStack {
+							List {
+								Link("League Calendar", destination: URL(string: "https://www.tcyfl.net/index.php?option=com_jevents&task=month.calendar&Itemid=1")!)
+								Text("Field Maps (Coming Soon)")
+								//Section(header: Text("League Rules")) {
+									NavigationLink("League Rules") {
+										PDFPreviewView(url: URL(string: "https://www.tcyfl.net/grabit.php?file=TCYFL_Football_Playing_Rules_FINAL.pdf")!)
+									//}
 								}
-								.scrollContentBackground(.hidden)
+								Text("VEO Camera Link (Coming Soon)")
 							}
-							.padding(.vertical, 20) // Reduced top padding
+							.scrollContentBackground(.hidden)
+							.padding(.vertical, 20)
 							.padding(.horizontal, 20)
 							.background(.ultraThinMaterial)
 							.cornerRadius(24)
 							.shadow(color: Color.black.opacity(0.15), radius: 10, y: 5)
 							.padding(.horizontal, 20)
-							
-							Spacer() // Only keep bottom spacer
+							.padding(.top, 10)
 						}
-						.frame(height: geometry.size.height * 0.7)
 					}
 				}
 			}
+			Spacer()
 			.navigationTitle("Tackle")
 		}
+		//Spacer()
 	}
 }
