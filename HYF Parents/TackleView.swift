@@ -17,8 +17,8 @@ struct TackleView: View {
 					VStack(spacing: 0) {
 						BannerView(geometry: geometry)
 						
-						VStack {
-							Spacer()
+						VStack(alignment: .leading) {
+							// Remove top Spacer and adjust padding
 							VStack {
 								List {
 									Link("League Calendar", destination: URL(string: "https://www.tcyfl.net/index.php?option=com_jevents&task=month.calendar&Itemid=1")!)
@@ -32,13 +32,14 @@ struct TackleView: View {
 								}
 								.scrollContentBackground(.hidden)
 							}
-							.padding(.vertical, 30)
+							.padding(.vertical, 20) // Reduced top padding
 							.padding(.horizontal, 20)
 							.background(.ultraThinMaterial)
 							.cornerRadius(24)
 							.shadow(color: Color.black.opacity(0.15), radius: 10, y: 5)
 							.padding(.horizontal, 20)
-							Spacer()
+							
+							Spacer() // Only keep bottom spacer
 						}
 						.frame(height: geometry.size.height * 0.7)
 					}

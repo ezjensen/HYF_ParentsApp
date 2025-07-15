@@ -17,55 +17,56 @@ struct MainScreenView: View {
         GridItem(.fixed(100), spacing: 60)
     ]
     
-    var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            GeometryReader { geometry in
-                VStack(spacing: 0) {
-                    // Top 20%: Banner
-                    BannerView(geometry: geometry)
-                    
-                    // Middle 10%: Social links
-                    VStack(spacing: 6) {
-                        HStack(spacing: 20) {
-                            socialButton(image: "icon_Facebook", url: "https://www.facebook.com/Huntley-Red-Raiders-Youth-Football-League-112134028046472", label: "Facebook")
-                            socialButton(image: "icon_Instagram", url: "https://www.instagram.com/hyf_redraiders/", label: "Instagram")
-                            socialButton(image: "icon_X", url: "https://twitter.com/huntleyyouthrr", label: "X")
-                        }
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 8)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(12)
-                        .shadow(color: Color.black, radius: 8, y: 4)
-                        .padding(.horizontal, 40)
-                        .padding(.top, -10)
-                    }
-                    
-                    // Bottom 70%: Main grid of buttons
-                    VStack {
-                        Spacer()
-                        VStack {
-                            LazyVGrid(columns: columns, spacing: 25) {
-                                mainButton(image: "icon_Calendar", label: "Important Dates", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.huntleyyouthfootball.org/page/show/6967331-important-dates", openURL: openURL)
-                                mainButton(image: "icon_Registration", label: "Registration", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.huntleyyouthfootball.org/page/show/6967329-registration", openURL: openURL)
-                                mainButton(image: "icon_SpiritStore", label: "Spirit       Stores", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.huntleyyouthfootball.org/spiritstore", openURL: openURL)
-                                mainButton(image: "icon_TCYFL", label: "TCYFL", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.tcyfl.net/index.php", openURL: openURL)
-                            }
-                        }
+	var body: some View {
+		ZStack {
+			Color.black.ignoresSafeArea()
+			GeometryReader { geometry in
+				VStack(spacing: 0) {
+					// Top 20%: Banner
+					BannerView(geometry: geometry)
+					
+					// Middle: Social links
+					VStack(spacing: 6) {
+						HStack(spacing: 20) {
+							socialButton(image: "icon_Facebook", url: "https://www.facebook.com/Huntley-Red-Raiders-Youth-Football-League-112134028046472", label: "Facebook")
+							socialButton(image: "icon_Instagram", url: "https://www.instagram.com/hyf_redraiders/", label: "Instagram")
+							socialButton(image: "icon_X", url: "https://twitter.com/huntleyyouthrr", label: "X")
+						}
+						.padding(.vertical, 4)
+						.padding(.horizontal, 8)
+						.background(.ultraThinMaterial.opacity(0.7))
+						.background(Color.white.opacity(0.5))
+						.cornerRadius(12)
+						.shadow(color: Color.black, radius: 8, y: 4)
+						.padding(.horizontal, 40)
+						.padding(.top, 10)
+					}
+					
+					// Main grid of buttons
+					VStack {
+						VStack {
+							LazyVGrid(columns: columns, spacing: 25) {
+								mainButton(image: "icon_Calendar", label: "Important Dates", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.huntleyyouthfootball.org/page/show/6967331-important-dates", openURL: openURL)
+								mainButton(image: "icon_Registration", label: "Registration", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.huntleyyouthfootball.org/page/show/6967329-registration", openURL: openURL)
+								mainButton(image: "icon_SpiritStore", label: "Spirit       Stores", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.huntleyyouthfootball.org/spiritstore", openURL: openURL)
+								mainButton(image: "icon_TCYFL", label: "TCYFL", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.tcyfl.net/index.php", openURL: openURL)
+							}
+						}
                         .padding(.vertical, 30)
                         .padding(.horizontal, 20)
-                        .background(.ultraThinMaterial)
+                        .background(.ultraThinMaterial.opacity(0.7))
                         .cornerRadius(24)
                         .shadow(color: Color.black.opacity(0.15), radius: 10, y: 5)
                         .padding(.horizontal, 20)
-                        Spacer()
-                    }
-                    .frame(height: geometry.size.height * 0.7)
-                }
-                .frame(width: geometry.size.width, height: geometry.size.height)
-            }
-        }
-    }
+                        .padding(.top, 20)
+						
+						Spacer() // Only keep bottom spacer
+					}
+				}
+				.frame(width: geometry.size.width, height: geometry.size.height)
+			}
+		}
+	}
     
     // Social media button builder
     @ViewBuilder
