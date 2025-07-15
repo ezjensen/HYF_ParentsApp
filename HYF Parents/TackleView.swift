@@ -10,17 +10,10 @@ import SwiftUI
 struct TackleView: View {
 	var body: some View {
 		NavigationView {
-<<<<<<< Updated upstream
-			GeometryReader { geometry in
-				ZStack {
-					Color.black.ignoresSafeArea()
-					
-=======
 			ZStack {
 				Color.black.ignoresSafeArea()
 				
 				GeometryReader { geometry in
->>>>>>> Stashed changes
 					VStack(spacing: 0) {
 						BannerView(geometry: geometry)
 						

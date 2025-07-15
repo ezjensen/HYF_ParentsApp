@@ -8,35 +8,6 @@
 import SwiftUI
 
 struct GirlsFlagView: View {
-<<<<<<< Updated upstream
-    var body: some View {
-        NavigationView {
-            ZStack {
-                Image("FootballField_Girls")
-                    .resizable()
-                    .opacity(0.6)
-                GeometryReader { geometry in
-                    VStack(spacing: 0) {
-                        BannerView(geometry: geometry)
-						
-                        List {
-                            Text("League Calendar (Coming Soon)")
-                            Text("Field Maps (Coming Soon)")
-                            Section(header: Text("League Rules")) {
-                                NavigationLink("League Rules") {
-                                    PDFPreviewView(url: URL(string: "https://www.tcyfl.net/grabit.php?file=TCYFL_Girls_Fall_Flag_Rules_2024.pdf")!)
-                                }
-                            }
-                        }
-                        .scrollContentBackground(.hidden)
-                        .background(Color.clear)
-                    }
-                }
-            }
-            .navigationTitle("Girls Flag")
-        }
-    }
-=======
 	var body: some View {
 		NavigationView {
 			ZStack {
@@ -75,5 +46,4 @@ struct GirlsFlagView: View {
 			.navigationTitle("Girls Flag")
 		}
 	}
->>>>>>> Stashed changes
 }
