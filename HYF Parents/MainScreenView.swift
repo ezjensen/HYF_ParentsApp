@@ -11,6 +11,12 @@ import SwiftUI
 struct MainScreenView: View {
 	@Environment(\.openURL) var openURL
 	@Binding var selectedTab: Int
+	@State private var showImportantDates = false
+	@State private var showRegistration = false
+	@State private var showSpiritStore = false
+	@State private var showTCYFL = false
+	@State private var showFieldMaps = false
+	@State private var showCoachesCorner = false
 	
 	let columns = [
 		GridItem(.fixed(100), spacing: 60),
@@ -23,7 +29,7 @@ struct MainScreenView: View {
 				Color.black.ignoresSafeArea()
 				
 				GeometryReader { geometry in
-					ScrollView ( .vertical, showsIndicators: false) {
+					ScrollView(.vertical, showsIndicators: false) {
 						VStack(spacing: 0) {
 							// Top: Banner
 							BannerView(geometry: geometry)
@@ -50,32 +56,58 @@ struct MainScreenView: View {
 							VStack {
 								VStack {
 									LazyVGrid(columns: columns, spacing: 25) {
-										mainButton(image: "icon_Calendar", label: "Important Dates", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.huntleyyouthfootball.org/page/show/6967331-important-dates", openURL: openURL)
+										// Important Dates button
 										Button(action: {
-											selectedTab = 4
+											showImportantDates = true
 										}) {
-											VStack(spacing: 8) {
-												Image("icon_WeatherAlert")
-													.resizable()
-													.frame(width: 70, height: 70)
-												Text("Weather\nAlerts")
-													.font(.headline)
-													.fontWeight(.semibold)
-													.foregroundColor(.black)
-													.multilineTextAlignment(.center)
-													.lineLimit(nil)
-													.minimumScaleFactor(0.7)
-											}
-											.frame(width: 120, height: 130)
-											.background(Color.white.opacity(1.0))
-											.cornerRadius(16)
-											.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
+											mainButtonView(image: "icon_Calendar", label: "Important Dates", bg: Color.white.opacity(1.0), fg: .black)
 										}
-										.buttonStyle(.plain)
-										.accessibilityLabel("Weather Alerts")
-										mainButton(image: "icon_Registration", label: "Registration", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.huntleyyouthfootball.org/page/show/6967329-registration", openURL: openURL)
-										mainButton(image: "icon_SpiritStore", label: "Spirit Stores", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.huntleyyouthfootball.org/spiritstore", openURL: openURL)
-										mainButton(image: "icon_TCYFL", label: "TCYFL", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.tcyfl.net/index.php", openURL: openURL)
+										
+										// Field Maps - Now opens in-app
+										Button(action: {
+											showFieldMaps = true
+										}) {
+											mainButtonView(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black)
+										}
+										
+										/*
+										 // Weather Alerts button
+										 Button(action: {
+										 selectedTab = 4
+										 }) {
+										 mainButtonView(image: "icon_WeatherAlert", label: "Weather\nAlerts", bg: Color.white.opacity(1.0), fg: .black)
+										 }
+										 .buttonStyle(.plain)
+										 .accessibilityLabel("Weather Alerts")
+										 */
+										
+										// Registration button
+										Button(action: {
+											showRegistration = true
+										}) {
+											mainButtonView(image: "icon_Registration", label: "Registration", bg: Color.white.opacity(1.0), fg: .black)
+										}
+										
+										// Spirit Store button
+										Button(action: {
+											showSpiritStore = true
+										}) {
+											mainButtonView(image: "icon_SpiritStore", label: "Spirit Stores", bg: Color.white.opacity(1.0), fg: .black)
+										}
+										
+										// TCYFL button
+										Button(action: {
+											showTCYFL = true
+										}) {
+											mainButtonView(image: "icon_TCYFL", label: "TCYFL", bg: Color.white.opacity(1.0), fg: .black)
+										}
+										
+										// Coaches Corner button
+										Button(action: {
+											showCoachesCorner = true
+										}) {
+											mainButtonView(image: "icon_Coach", label: "Coaches Corner", bg: Color.white.opacity(1.0), fg: .black)
+										}
 									}
 								}
 								.padding(.vertical, 30)
@@ -91,8 +123,75 @@ struct MainScreenView: View {
 				}
 			}
 			.navigationBarHidden(true)
+			.sheet(isPresented: $showImportantDates) {
+				webViewSheet(title: "Important Dates", url: URL(string: "https://www.huntleyyouthfootball.org/page/show/6967331-important-dates")!)
+			}
+			.sheet(isPresented: $showFieldMaps) {
+				webViewSheet(title: "Field Maps", url: URL(string: "https://www.tcyfl.net/maps.php")!)
+			}
+			.sheet(isPresented: $showRegistration) {
+				webViewSheet(title: "Registration", url: URL(string: "https://www.huntleyyouthfootball.org/page/show/6967329-registration")!)
+			}
+			.sheet(isPresented: $showSpiritStore) {
+				webViewSheet(title: "Spirit Store", url: URL(string: "https://www.huntleyyouthfootball.org/spiritstore")!)
+			}
+			.sheet(isPresented: $showTCYFL) {
+				webViewSheet(title: "TCYFL", url: URL(string: "https://www.tcyfl.net/index.php")!)
+			}
+			.sheet(isPresented: $showCoachesCorner) {
+				webViewSheet(title: "Coaches Corner", url: URL(string: "https://www.huntleyyouthfootball.org/")!)
+			}
 		}
 		.navigationViewStyle(StackNavigationViewStyle()) // Ensure consistent navigation style
+	}
+	
+	// MARK: - Helper to create WebView sheet
+	private func webViewSheet(title: String, url: URL) -> some View {
+		NavigationView {
+			WebView(url: url)
+				.navigationBarTitle(title, displayMode: .inline)
+				.navigationBarItems(trailing: Button("Done") {
+					// Close the appropriate sheet based on title
+					switch title {
+						case "Important Dates":
+							showImportantDates = false
+						case "Field Maps":
+							showFieldMaps = false
+						case "Registration":
+							showRegistration = false
+						case "Spirit Store":
+							showSpiritStore = false
+						case "TCYFL":
+							showTCYFL = false
+						case "Coaches Corner":
+							showCoachesCorner = false
+						default:
+							break
+					}
+				})
+		}
+	}
+	
+	// MARK: - Button view component
+	private func mainButtonView(image: String, label: String, bg: Color, fg: Color) -> some View {
+		VStack(spacing: 8) {
+			Image(image)
+				.resizable()
+				.frame(width: 70, height: 70)
+			Text(label)
+				.font(.headline)
+				.fontWeight(.semibold)
+				.foregroundColor(fg)
+				.multilineTextAlignment(.center)
+				.lineLimit(nil)
+				.minimumScaleFactor(0.7)
+		}
+		.frame(width: 120, height: 130)
+		.background(bg)
+		.cornerRadius(16)
+		.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
+		.buttonStyle(.plain)
+		.accessibilityLabel(label)
 	}
 	
 	// MARK: - Social media button builder
@@ -109,44 +208,5 @@ struct MainScreenView: View {
 				.accessibilityLabel(label)
 		}
 		.buttonStyle(.plain)
-	}
-	
-	// MARK: - Main Button View Builder
-	private func mainButton(
-		image: String,
-		label: String,
-		bg: Color,
-		fg: Color,
-		url: String,
-		openURL: OpenURLAction
-	) -> some View {
-		Button(action: {
-			if let url = URL(string: url) {
-				if UIApplication.shared.canOpenURL(url) {
-					UIApplication.shared.open(url)
-				} else {
-					openURL(url)
-				}
-			}
-		}) {
-			VStack(spacing: 8) {
-				Image(image)
-					.resizable()
-					.frame(width: 70, height: 70)
-				Text(label)
-					.font(.headline)
-					.fontWeight(.semibold)
-					.foregroundColor(fg)
-					.multilineTextAlignment(.center)
-					.lineLimit(nil)
-					.minimumScaleFactor(0.7)
-			}
-			.frame(width: 120, height: 130)
-			.background(bg)
-			.cornerRadius(16)
-			.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
-		}
-		.buttonStyle(.plain)
-		.accessibilityLabel(label)
 	}
 }

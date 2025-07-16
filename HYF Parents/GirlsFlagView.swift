@@ -9,6 +9,9 @@ import SwiftUI
 
 struct GirlsFlagView: View {
 	@Environment(\.openURL) var openURL
+	@State private var showingWebView = false
+	@State private var webViewTitle = ""
+	@State private var webViewURL: URL? = nil
 	
 	let columns = [
 		GridItem(.fixed(100), spacing: 60),
@@ -53,9 +56,28 @@ struct GirlsFlagView: View {
 							VStack {
 								VStack {
 									LazyVGrid(columns: columns, spacing: 25) {
-										mainButton(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black, url: "", openURL: openURL)
-										mainButton(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black, url: "", openURL: openURL)
+										// League Calendar - Now opens in-app
+										Button(action: {
+											webViewTitle = "League Calendar"
+											webViewURL = URL(string: "https://www.tcyfl.net/index.php?option=com_jevents&task=month.calendar&Itemid=1")
+											showingWebView = true
+										}) {
+											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
+										}
 										
+										/*
+										// Field Maps - Will open in-app when URL is provided
+										Button(action: {
+											if let url = URL(string: "https://www.tcyfl.net/maps.php") {
+												webViewTitle = "Field Maps"
+												webViewURL = url
+												showingWebView = true
+											}
+										}) {
+											mainButtonView(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black)
+										}
+										*/
+										 
 										// League Rules Button
 										NavigationLink {
 											PDFPreviewView(url: URL(string: "https://www.tcyfl.net/grabit.php?file=TCYFL_Girls_Fall_Flag_Rules_2024.pdf")!)
@@ -105,8 +127,44 @@ struct GirlsFlagView: View {
 				}
 			}
 			.navigationBarHidden(true) // Hide navigation bar for a cleaner look
+			.sheet(isPresented: $showingWebView) {
+				if let url = webViewURL {
+					webViewSheet(title: webViewTitle, url: url)
+				}
+			}
 		}
 		.navigationViewStyle(StackNavigationViewStyle())
+	}
+	
+	// MARK: - Helper to create WebView sheet
+	private func webViewSheet(title: String, url: URL) -> some View {
+		NavigationView {
+			WebView(url: url)
+				.navigationBarTitle(title, displayMode: .inline)
+				.navigationBarItems(trailing: Button("Done") {
+					showingWebView = false
+				})
+		}
+	}
+	
+	// MARK: - Button view component
+	private func mainButtonView(image: String, label: String, bg: Color, fg: Color) -> some View {
+		VStack(spacing: 8) {
+			Image(image)
+				.resizable()
+				.frame(width: 70, height: 70)
+			Text(label)
+				.font(.headline)
+				.fontWeight(.semibold)
+				.foregroundColor(fg)
+				.multilineTextAlignment(.center)
+				.lineLimit(nil)
+				.minimumScaleFactor(0.7)
+		}
+		.frame(width: 120, height: 130)
+		.background(bg)
+		.cornerRadius(16)
+		.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
 	}
 	
 	// Add social button builder
@@ -123,44 +181,5 @@ struct GirlsFlagView: View {
 				.accessibilityLabel(label)
 		}
 		.buttonStyle(.plain)
-	}
-	
-	// Add main button builder
-	private func mainButton(
-		image: String,
-		label: String,
-		bg: Color,
-		fg: Color,
-		url: String,
-		openURL: OpenURLAction
-	) -> some View {
-		Button(action: {
-			if let url = URL(string: url), !url.absoluteString.isEmpty {
-				if UIApplication.shared.canOpenURL(url) {
-					UIApplication.shared.open(url)
-				} else {
-					openURL(url)
-				}
-			}
-		}) {
-			VStack(spacing: 8) {
-				Image(image)
-					.resizable()
-					.frame(width: 70, height: 70)
-				Text(label)
-					.font(.headline)
-					.fontWeight(.semibold)
-					.foregroundColor(fg)
-					.multilineTextAlignment(.center)
-					.lineLimit(nil)
-					.minimumScaleFactor(0.7)
-			}
-			.frame(width: 120, height: 130)
-			.background(bg)
-			.cornerRadius(16)
-			.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
-		}
-		.buttonStyle(.plain)
-		.accessibilityLabel(label)
 	}
 }

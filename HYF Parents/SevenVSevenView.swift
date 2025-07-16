@@ -12,6 +12,9 @@ struct SevenVSevenView: View {
 	@State private var showingRulesActionSheet = false
 	@State private var selectedRulesURL: URL? = nil
 	@State private var showingPDFView = false
+	@State private var showingWebView = false
+	@State private var webViewTitle = ""
+	@State private var webViewURL: URL? = nil
 	
 	let columns = [
 		GridItem(.fixed(100), spacing: 60),
@@ -33,7 +36,7 @@ struct SevenVSevenView: View {
 					ScrollView (.vertical, showsIndicators: false) {
 						VStack(spacing: 0) {
 							BannerView(geometry: geometry)
-								.padding(.top, 70) // Ensure consistent top padding
+								.padding(.top, 70)
 							
 							// Social links
 							VStack(spacing: 6) {
@@ -56,9 +59,28 @@ struct SevenVSevenView: View {
 							VStack {
 								VStack {
 									LazyVGrid(columns: columns, spacing: 25) {
-										mainButton(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black, url: "https://www.tcyfl.net/myschedules7man.php", openURL: openURL)
-										mainButton(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black, url: "", openURL: openURL)
+										// League Calendar - Now opens in-app
+										Button(action: {
+											webViewTitle = "League Calendar"
+											webViewURL = URL(string: "https://www.tcyfl.net/myschedules7man.php")
+											showingWebView = true
+										}) {
+											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
+										}
 										
+										/*
+										// Field Maps - Will open in-app when URL is provided
+										Button(action: {
+											if let url = URL(string: "https://www.tcyfl.net/maps.php") {
+												webViewTitle = "Field Maps"
+												webViewURL = url
+												showingWebView = true
+											}
+										}) {
+											mainButtonView(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black)
+										}
+										*/
+										 
 										// League Rules Button with Action Sheet
 										Button(action: {
 											showingRulesActionSheet = true
@@ -136,46 +158,29 @@ struct SevenVSevenView: View {
 					PDFPreviewView(url: url)
 				}
 			}
+			.sheet(isPresented: $showingWebView) {
+				if let url = webViewURL {
+					webViewSheet(title: webViewTitle, url: url)
+				}
+			}
 			.navigationBarHidden(true)
 		}
 		.navigationViewStyle(StackNavigationViewStyle())
 	}
 	
-	// Add social button builder
-	@ViewBuilder
-	private func socialButton(image: String, url: String, label: String) -> some View {
-		Button(action: {
-			if let url = URL(string: url) {
-				openURL(url)
-			}
-		}) {
-			Image(image)
-				.resizable()
-				.frame(width: 32, height: 32)
-				.accessibilityLabel(label)
+	// MARK: - Helper to create WebView sheet
+	private func webViewSheet(title: String, url: URL) -> some View {
+		NavigationView {
+			WebView(url: url)
+				.navigationBarTitle(title, displayMode: .inline)
+				.navigationBarItems(trailing: Button("Done") {
+					showingWebView = false
+				})
 		}
-		.buttonStyle(.plain)
 	}
-}
-
-// MARK: - Button Builder - Rules
-private func mainButton(
-	image: String,
-	label: String,
-	bg: Color,
-	fg: Color,
-	url: String,
-	openURL: OpenURLAction
-) -> some View {
-	Button(action: {
-		if let url = URL(string: url), !url.absoluteString.isEmpty {
-			if UIApplication.shared.canOpenURL(url) {
-				UIApplication.shared.open(url)
-			} else {
-				openURL(url)
-			}
-		}
-	}) {
+	
+	// MARK: - Button view component
+	private func mainButtonView(image: String, label: String, bg: Color, fg: Color) -> some View {
 		VStack(spacing: 8) {
 			Image(image)
 				.resizable()
@@ -193,6 +198,20 @@ private func mainButton(
 		.cornerRadius(16)
 		.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
 	}
-	.buttonStyle(.plain)
-	.accessibilityLabel(label)
+	
+	// Add social button builder
+	@ViewBuilder
+	private func socialButton(image: String, url: String, label: String) -> some View {
+		Button(action: {
+			if let url = URL(string: url) {
+				openURL(url)
+			}
+		}) {
+			Image(image)
+				.resizable()
+				.frame(width: 32, height: 32)
+				.accessibilityLabel(label)
+		}
+		.buttonStyle(.plain)
+	}
 }
