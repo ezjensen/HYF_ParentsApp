@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "logo_Registration.png",
+      "filename" : "logo_Registration_NoText.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "logo_Registration 1.png",
+      "filename" : "logo_Registration_NoText 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "logo_Registration 2.png",
+      "filename" : "logo_Registration_NoText 2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

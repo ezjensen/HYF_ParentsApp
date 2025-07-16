@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "icon_HYF_Calendar 2.png",
+      "filename" : "icon_Rules.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "icon_HYF_Calendar 1.png",
+      "filename" : "icon_Rules 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "icon_HYF_Calendar.png",
+      "filename" : "icon_Rules 2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

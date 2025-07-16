@@ -72,9 +72,8 @@ struct BannerView: View {
 				.frame(height: geometry.size.height * 0.12)
 				.clipped()
 				.opacity(0.9)
-				.padding(.top, geometry.safeAreaInsets.top)
 				.frame(maxWidth: .infinity)
 		}
-		.frame(height: geometry.size.height * 0.12 + geometry.safeAreaInsets.top)
+		.frame(height: geometry.size.height * 0.12)
 	}
 }
