@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WebKit
 
 struct GirlsFlagView: View {
 	@Environment(\.openURL) var openURL
@@ -66,18 +67,18 @@ struct GirlsFlagView: View {
 										}
 										
 										/*
-										// Field Maps - Will open in-app when URL is provided
-										Button(action: {
-											if let url = URL(string: "https://www.tcyfl.net/maps.php") {
-												webViewTitle = "Field Maps"
-												webViewURL = url
-												showingWebView = true
-											}
-										}) {
-											mainButtonView(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black)
-										}
-										*/
-										 
+										 // Field Maps - Will open in-app when URL is provided
+										 Button(action: {
+										 if let url = URL(string: "https://www.tcyfl.net/maps.php") {
+										 webViewTitle = "Field Maps"
+										 webViewURL = url
+										 showingWebView = true
+										 }
+										 }) {
+										 mainButtonView(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black)
+										 }
+										 */
+										
 										// League Rules Button
 										NavigationLink {
 											PDFPreviewView(url: URL(string: "https://www.tcyfl.net/grabit.php?file=TCYFL_Girls_Fall_Flag_Rules_2024.pdf")!)
@@ -139,11 +140,19 @@ struct GirlsFlagView: View {
 	// MARK: - Helper to create WebView sheet
 	private func webViewSheet(title: String, url: URL) -> some View {
 		NavigationView {
-			WebView(url: url)
-				.navigationBarTitle(title, displayMode: .inline)
-				.navigationBarItems(trailing: Button("Done") {
-					showingWebView = false
-				})
+			if title == "League Calendar" {
+				EnhancedWebView(url: url, divToShow: "box5")
+					.navigationBarTitle(title, displayMode: .inline)
+					.navigationBarItems(trailing: Button("Done") {
+						showingWebView = false
+					})
+			} else {
+				StandardWebView(url: url)
+					.navigationBarTitle(title, displayMode: .inline)
+					.navigationBarItems(trailing: Button("Done") {
+						showingWebView = false
+					})
+			}
 		}
 	}
 	

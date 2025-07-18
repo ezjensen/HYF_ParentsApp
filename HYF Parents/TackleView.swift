@@ -6,12 +6,14 @@
 //
 
 import SwiftUI
+import WebKit
 
 struct TackleView: View {
 	@Environment(\.openURL) var openURL
 	@State private var showingWebView = false
 	@State private var webViewTitle = ""
 	@State private var webViewURL: URL? = nil
+	@State private var showingCalendarActionSheet = false
 	
 	let columns = [
 		GridItem(.fixed(100), spacing: 60),
@@ -31,7 +33,7 @@ struct TackleView: View {
 				Color.black.ignoresSafeArea()
 				
 				GeometryReader { geometry in
-					ScrollView (.vertical, showsIndicators: false) {
+					ScrollView(.vertical, showsIndicators: false) {
 						VStack(spacing: 0) {
 							// Top: Banner
 							BannerView(geometry: geometry)
@@ -58,28 +60,34 @@ struct TackleView: View {
 							VStack {
 								VStack {
 									LazyVGrid(columns: columns, spacing: 25) {
-										// League Calendar - Now opens in-app
+										// League Calendar - Now opens selection dialog
 										Button(action: {
-											webViewTitle = "League Calendar"
-											webViewURL = URL(string: "https://www.tcyfl.net/index.php?option=com_jevents&task=month.calendar&Itemid=1")
-											showingWebView = true
+											showingCalendarActionSheet = true
 										}) {
 											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
 										}
-										
-										/*
-										// Field Maps - Will open in-app when URL is provided
-										Button(action: {
-											if let url = URL(string: "https://www.tcyfl.net/maps.php") {
-												webViewTitle = "Field Maps"
-												webViewURL = url
+										.confirmationDialog("Select Schedule", isPresented: $showingCalendarActionSheet) {
+											Button("BIG 10 Schedules") {
+												webViewTitle = "BIG 10 Schedules"
+												webViewURL = URL(string: "https://www.tcyfl.net/myleagueschedules.php?co=big10")
 												showingWebView = true
 											}
+											Button("PAC Schedules") {
+												webViewTitle = "PAC Schedules"
+												webViewURL = URL(string: "https://www.tcyfl.net/myleagueschedules.php?co=pac10")
+												showingWebView = true
+											}
+										}
+										
+										// Field Maps
+										Button(action: {
+											webViewTitle = "Field Maps"
+											webViewURL = URL(string: "https://www.tcyfl.net/index.php?option=com_content&view=article&id=7&Itemid=17")
+											showingWebView = true
 										}) {
 											mainButtonView(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black)
 										}
-										*/
-										 
+										
 										// League Rules
 										NavigationLink {
 											PDFPreviewView(url: URL(string: "https://www.tcyfl.net/grabit.php?file=TCYFL_Football_Playing_Rules_FINAL.pdf")!)
@@ -104,11 +112,9 @@ struct TackleView: View {
 										
 										// VEO Camera - Will open in-app when URL is provided
 										Button(action: {
-											if let url = URL(string: "https://veo.co/") {
-												webViewTitle = "VEO Camera"
-												webViewURL = url
-												showingWebView = true
-											}
+											webViewTitle = "VEO Camera"
+											webViewURL = URL(string: "https://veo.co/")
+											showingWebView = true
 										}) {
 											mainButtonView(image: "icon_VideoCamera", label: "VEO Camera", bg: Color.white.opacity(1.0), fg: .black)
 										}
@@ -152,11 +158,19 @@ struct TackleView: View {
 	// MARK: - Helper to create WebView sheet
 	private func webViewSheet(title: String, url: URL) -> some View {
 		NavigationView {
-			WebView(url: url)
-				.navigationBarTitle(title, displayMode: .inline)
-				.navigationBarItems(trailing: Button("Done") {
-					showingWebView = false
-				})
+			if title == "BIG 10 Schedules" || title == "PAC Schedules" {
+				EnhancedWebView(url: url, divToShow: "box5")
+					.navigationBarTitle(title, displayMode: .inline)
+					.navigationBarItems(trailing: Button("Done") {
+						showingWebView = false
+					})
+			} else {
+				StandardWebView(url: url)
+					.navigationBarTitle(title, displayMode: .inline)
+					.navigationBarItems(trailing: Button("Done") {
+						showingWebView = false
+					})
+			}
 		}
 	}
 	

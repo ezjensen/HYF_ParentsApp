@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WebKit
 
 struct SevenVSevenView: View {
 	@Environment(\.openURL) var openURL
@@ -15,6 +16,7 @@ struct SevenVSevenView: View {
 	@State private var showingWebView = false
 	@State private var webViewTitle = ""
 	@State private var webViewURL: URL? = nil
+	@State private var showingCalendarActionSheet = false
 	
 	let columns = [
 		GridItem(.fixed(100), spacing: 60),
@@ -27,13 +29,21 @@ struct SevenVSevenView: View {
 		"X": "https://twitter.com/huntley7v7"
 	]
 	
+	// Schedule URLs for different divisions
+	private let scheduleURLs = [
+		"K-3": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=K3",
+		"4-5th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=4-5th",
+		"6-7th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=6-7th",
+		"8th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=8th"
+	]
+	
 	var body: some View {
 		NavigationView {
 			ZStack {
 				Color.black.ignoresSafeArea()
 				
 				GeometryReader { geometry in
-					ScrollView (.vertical, showsIndicators: false) {
+					ScrollView(.vertical, showsIndicators: false) {
 						VStack(spacing: 0) {
 							BannerView(geometry: geometry)
 								.padding(.top, 70)
@@ -59,28 +69,44 @@ struct SevenVSevenView: View {
 							VStack {
 								VStack {
 									LazyVGrid(columns: columns, spacing: 25) {
-										// League Calendar - Now opens in-app
+										// League Calendar - Now opens selection dialog
 										Button(action: {
-											webViewTitle = "League Calendar"
-											webViewURL = URL(string: "https://www.tcyfl.net/myschedules7man.php")
-											showingWebView = true
+											showingCalendarActionSheet = true
 										}) {
 											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
 										}
-										
-										/*
-										// Field Maps - Will open in-app when URL is provided
-										Button(action: {
-											if let url = URL(string: "https://www.tcyfl.net/maps.php") {
-												webViewTitle = "Field Maps"
-												webViewURL = url
+										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
+											Button("K-3 Schedule") {
+												webViewTitle = "K-3 Schedule"
+												webViewURL = URL(string: scheduleURLs["K-3"] ?? "")
 												showingWebView = true
 											}
+											Button("4-5th Schedule") {
+												webViewTitle = "4-5th Schedule"
+												webViewURL = URL(string: scheduleURLs["4-5th"] ?? "")
+												showingWebView = true
+											}
+											Button("6-7th Schedule") {
+												webViewTitle = "6-7th Schedule"
+												webViewURL = URL(string: scheduleURLs["6-7th"] ?? "")
+												showingWebView = true
+											}
+											Button("8th Schedule") {
+												webViewTitle = "8th Schedule"
+												webViewURL = URL(string: scheduleURLs["8th"] ?? "")
+												showingWebView = true
+											}
+										}
+										
+										// Field Maps - Will open in-app when URL is provided
+										Button(action: {
+											webViewTitle = "Field Maps"
+											webViewURL = URL(string: "https://www.tcyfl.net/maps.php")
+											showingWebView = true
 										}) {
 											mainButtonView(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black)
 										}
-										*/
-										 
+										
 										// League Rules Button with Action Sheet
 										Button(action: {
 											showingRulesActionSheet = true
@@ -171,12 +197,22 @@ struct SevenVSevenView: View {
 	// MARK: - Helper to create WebView sheet
 	private func webViewSheet(title: String, url: URL) -> some View {
 		NavigationView {
-			WebView(url: url)
-				.navigationBarTitle(title, displayMode: .inline)
-				.navigationBarItems(trailing: Button("Done") {
-					showingWebView = false
-				})
+			if title.contains("Schedule") {
+				EnhancedWebView(url: url, divToShow: "box5")
+					.navigationBarTitle(title, displayMode: .inline)
+					.navigationBarItems(trailing: Button("Done") {
+						showingWebView = false
+					})
+					.preferredColorScheme(.dark) // Force dark mode
+			} else {
+				StandardWebView(url: url)
+					.navigationBarTitle(title, displayMode: .inline)
+					.navigationBarItems(trailing: Button("Done") {
+						showingWebView = false
+					})
+			}
 		}
+		.accentColor(.red) // Use team color for navigation elements
 	}
 	
 	// MARK: - Button view component
