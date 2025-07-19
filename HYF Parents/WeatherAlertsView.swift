@@ -10,6 +10,12 @@ import WebKit
 
 struct WeatherAlertsView: View {
 	@Environment(\.openURL) var openURL
+	@Binding var selectedTab: Int
+	
+	// For preview purposes
+	init(selectedTab: Binding<Int> = .constant(4)) {
+		self._selectedTab = selectedTab
+	}
 	
 	@State private var selectedSchool = "Marlowe Middle School"
 	let schools = [
@@ -31,7 +37,7 @@ struct WeatherAlertsView: View {
 				GeometryReader { geometry in
 					ScrollView(.vertical, showsIndicators: false) {
 						VStack(spacing: 0) {
-							BannerView(geometry: geometry)
+							BannerView(geometry: geometry, selectedTab: $selectedTab)
 								.padding(.top, 70) // Consistent with other views
 							
 							VStack(alignment: .leading, spacing: 5) {

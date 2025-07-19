@@ -13,6 +13,12 @@ struct GirlsFlagView: View {
 	@State private var showingWebView = false
 	@State private var webViewTitle = ""
 	@State private var webViewURL: URL? = nil
+	@Binding var selectedTab: Int
+	
+	// For preview purposes
+	init(selectedTab: Binding<Int> = .constant(3)) {
+		self._selectedTab = selectedTab
+	}
 	
 	let columns = [
 		GridItem(.fixed(100), spacing: 60),
@@ -33,8 +39,9 @@ struct GirlsFlagView: View {
 				GeometryReader { geometry in
 					ScrollView (.vertical, showsIndicators: false) {
 						VStack(spacing: 0) {
-							BannerView(geometry: geometry)
-								.padding(.top, 70) // Ensure consistent top padding
+							// Use updated BannerView with tab binding
+							BannerView(geometry: geometry, selectedTab: $selectedTab)
+								.padding(.top, 70)
 							
 							// Social links
 							VStack(spacing: 6) {
@@ -66,19 +73,6 @@ struct GirlsFlagView: View {
 											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										
-										/*
-										 // Field Maps - Will open in-app when URL is provided
-										 Button(action: {
-										 if let url = URL(string: "https://www.tcyfl.net/maps.php") {
-										 webViewTitle = "Field Maps"
-										 webViewURL = url
-										 showingWebView = true
-										 }
-										 }) {
-										 mainButtonView(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black)
-										 }
-										 */
-										
 										// League Rules Button
 										NavigationLink {
 											PDFPreviewView(url: URL(string: "https://www.tcyfl.net/grabit.php?file=TCYFL_Girls_Fall_Flag_Rules_2024.pdf")!)
@@ -100,8 +94,20 @@ struct GirlsFlagView: View {
 											.cornerRadius(16)
 											.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
 										}
+										// First invisible placeholder button
+										Button(action: {}) {
+											VStack(spacing: 8) {
+												Color.clear
+													.frame(width: 70, height: 70)
+												Text("")
+													.font(.headline)
+											}
+											.frame(width: 120, height: 130)
+										}
+										.buttonStyle(.plain)
+										.opacity(0)
 										
-										// First invisible placeholder
+										// Second invisible placeholder button
 										Button(action: {}) {
 											VStack(spacing: 8) {
 												Color.clear
@@ -120,14 +126,17 @@ struct GirlsFlagView: View {
 								.padding(.top, 20)
 								.padding(.bottom, geometry.safeAreaInsets.bottom)
 								
-								Spacer()
+								
+								
+								
+								Spacer(minLength: 20) // Ensure some space at bottom
 							}
 						}
 					}
-					.ignoresSafeArea(edges: .top) // This helps remove the top space
+					.ignoresSafeArea(edges: .top)
 				}
 			}
-			.navigationBarHidden(true) // Hide navigation bar for a cleaner look
+			.navigationBarHidden(true)
 			.sheet(isPresented: $showingWebView) {
 				if let url = webViewURL {
 					webViewSheet(title: webViewTitle, url: url)

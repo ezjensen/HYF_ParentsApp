@@ -22,25 +22,25 @@ struct ContentView: View {
 						Text("Home")
 					}
 					.tag(0)
-				TackleView()
+				TackleView(selectedTab: $selectedTab)
 					.tabItem {
 						Image(systemName: "sportscourt")
 						Text("Tackle")
 					}
 					.tag(1)
-				SevenVSevenView()
+				SevenVSevenView(selectedTab: $selectedTab)
 					.tabItem {
 						Image(systemName: "person.3.fill")
 						Text("7v7")
 					}
 					.tag(2)
-				GirlsFlagView()
+				GirlsFlagView(selectedTab: $selectedTab)
 					.tabItem {
 						Image(systemName: "flag.fill")
 						Text("Girls Flag")
 					}
 					.tag(3)
-				WeatherAlertsView()
+				WeatherAlertsView(selectedTab: $selectedTab)
 					.tabItem {
 						Image(systemName: "cloud.bolt.fill")
 						Text("Weather")
@@ -61,19 +61,30 @@ struct ContentView: View {
 	}
 }
 
+
 // MARK: - Banner View Component
 struct BannerView: View {
 	var geometry: GeometryProxy
+	@Binding var selectedTab: Int
 	
 	var body: some View {
 		ZStack {
-			Image("HYF_RedRaiders_Banner")
+			// Choose banner image based on selected tab
+			Image(bannerImageForTab(selectedTab))
 				.resizable()
-				.frame(height: geometry.size.height * 0.12)
-				.clipped()
+				.aspectRatio(contentMode: .fit)
+				.frame(width: geometry.size.width)
 				.opacity(0.9)
-				.frame(maxWidth: .infinity)
 		}
-		.frame(height: geometry.size.height * 0.12)
+	}
+	
+	// Helper function to determine which banner to display
+	private func bannerImageForTab(_ tab: Int) -> String {
+		switch tab {
+			case 3: // Girls Flag tab
+				return "HYF_RedRaiders_Banner_GIRLS"
+			default:
+				return "HYF_RedRaiders_Banner"
+		}
 	}
 }

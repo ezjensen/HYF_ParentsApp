@@ -17,6 +17,12 @@ struct SevenVSevenView: View {
 	@State private var webViewTitle = ""
 	@State private var webViewURL: URL? = nil
 	@State private var showingCalendarActionSheet = false
+	@Binding var selectedTab: Int
+	
+	// For preview purposes
+	init(selectedTab: Binding<Int> = .constant(2)) {
+		self._selectedTab = selectedTab
+	}
 	
 	let columns = [
 		GridItem(.fixed(100), spacing: 60),
@@ -45,7 +51,8 @@ struct SevenVSevenView: View {
 				GeometryReader { geometry in
 					ScrollView(.vertical, showsIndicators: false) {
 						VStack(spacing: 0) {
-							BannerView(geometry: geometry)
+							// Updated to use the tab-aware BannerView
+							BannerView(geometry: geometry, selectedTab: $selectedTab)
 								.padding(.top, 70)
 							
 							// Social links
@@ -76,28 +83,29 @@ struct SevenVSevenView: View {
 											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
-											Button("K-3 Schedule") {
+											Button("K-3") {
 												webViewTitle = "K-3 Schedule"
 												webViewURL = URL(string: scheduleURLs["K-3"] ?? "")
 												showingWebView = true
 											}
-											Button("4-5th Schedule") {
+											Button("4-5th") {
 												webViewTitle = "4-5th Schedule"
 												webViewURL = URL(string: scheduleURLs["4-5th"] ?? "")
 												showingWebView = true
 											}
-											Button("6-7th Schedule") {
+											Button("6-7th") {
 												webViewTitle = "6-7th Schedule"
 												webViewURL = URL(string: scheduleURLs["6-7th"] ?? "")
 												showingWebView = true
 											}
-											Button("8th Schedule") {
+											Button("8th") {
 												webViewTitle = "8th Schedule"
 												webViewURL = URL(string: scheduleURLs["8th"] ?? "")
 												showingWebView = true
 											}
 										}
 										
+										/*
 										// Field Maps - Will open in-app when URL is provided
 										Button(action: {
 											webViewTitle = "Field Maps"
@@ -106,7 +114,8 @@ struct SevenVSevenView: View {
 										}) {
 											mainButtonView(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black)
 										}
-										
+										*/
+										 
 										// League Rules Button with Action Sheet
 										Button(action: {
 											showingRulesActionSheet = true

@@ -32,7 +32,7 @@ struct MainScreenView: View {
 					ScrollView(.vertical, showsIndicators: false) {
 						VStack(spacing: 0) {
 							// Top: Banner
-							BannerView(geometry: geometry)
+							BannerView(geometry: geometry, selectedTab: $selectedTab)
 								.padding(.top, 70) // Ensure consistent top padding
 							
 							// Middle: Social links
