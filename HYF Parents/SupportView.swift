@@ -14,20 +14,44 @@ struct SupportView: View {
 	@State private var showingMailView = false
 	@State private var showingMailError = false
 	@State private var showingThankYou = false
-	@State private var feedbackType = "Feature Request"
+	@State private var feedbackType = "General Feedback"
 	@State private var feedbackMessage = ""
+	@FocusState private var isTextEditorFocused: Bool
+	@State private var shouldNavigateHome = false
+	
+	// Add this to manage alert priorities
+	@State private var activeAlert: ActiveAlert? = nil
+	
+	enum ActiveAlert: Identifiable {
+		case about, mailError, thankYou
+		
+		var id: Int {
+			switch self {
+				case .about: return 0
+				case .mailError: return 1
+				case .thankYou: return 2
+			}
+		}
+	}
 	
 	// For preview purposes
 	init(selectedTab: Binding<Int> = .constant(5)) {
 		self._selectedTab = selectedTab
 	}
 	
-	let feedbackTypes = ["Feature Request", "Bug Report", "General Feedback"]
+	let feedbackTypes = ["General Feedback", "Feature Request", "Report a Bug"]
 	
 	var body: some View {
 		NavigationView {
 			ZStack {
 				Color.black.ignoresSafeArea()
+				
+				// Add tap gesture to dismiss keyboard
+				Color.black.opacity(0.001)
+					.frame(maxWidth: .infinity, maxHeight: .infinity)
+					.onTapGesture {
+						isTextEditorFocused = false
+					}
 				
 				GeometryReader { geometry in
 					ScrollView(.vertical, showsIndicators: false) {
@@ -37,9 +61,10 @@ struct SupportView: View {
 								.padding(.top, 70)
 							
 							VStack(spacing: 20) {
+								
 								// About button
 								Button(action: {
-									showingAboutInfo = true
+									activeAlert = .about
 								}) {
 									HStack {
 										Image(systemName: "info.circle.fill")
@@ -52,7 +77,7 @@ struct SupportView: View {
 									}
 									.foregroundColor(.white)
 									.padding()
-									.background(Color.red.opacity(0.8))
+									.background(Color.gray.opacity(0.2))
 									.cornerRadius(10)
 								}
 								.padding(.horizontal)
@@ -72,12 +97,33 @@ struct SupportView: View {
 											.foregroundColor(.white.opacity(0.8))
 											.padding(.horizontal)
 										
-										Picker("Feedback Type", selection: $feedbackType) {
+										// Custom segmented control with taller buttons
+										HStack(spacing: 0) {
 											ForEach(feedbackTypes, id: \.self) { type in
-												Text(type).tag(type)
+												Button(action: {
+													feedbackType = type
+												}) {
+													VStack {
+														Text(type)
+															.font(.subheadline)
+															.multilineTextAlignment(.center)
+															.padding(.vertical, 8)
+															.padding(.horizontal, 4)
+															.minimumScaleFactor(0.8)
+													}
+													.frame(maxWidth: .infinity)
+													.frame(height: 50) // Makes buttons taller
+													.background(feedbackType == type ? Color.red.opacity(0.8) : Color.gray.opacity(0.3))
+													.foregroundColor(.white)
+												}
+												.buttonStyle(PlainButtonStyle())
 											}
 										}
-										.pickerStyle(SegmentedPickerStyle())
+										.cornerRadius(8)
+										.overlay(
+											RoundedRectangle(cornerRadius: 8)
+												.stroke(Color.white.opacity(0.2), lineWidth: 1)
+										)
 										.padding(.horizontal)
 									}
 									
@@ -88,6 +134,7 @@ struct SupportView: View {
 											.foregroundColor(.white.opacity(0.8))
 											.padding(.horizontal)
 										
+										// Update TextEditor to use focus state
 										TextEditor(text: $feedbackMessage)
 											.frame(minHeight: 150)
 											.padding(5)
@@ -99,6 +146,15 @@ struct SupportView: View {
 													.stroke(Color.white.opacity(0.3), lineWidth: 1)
 											)
 											.padding(.horizontal)
+											.focused($isTextEditorFocused)
+											.toolbar {
+												ToolbarItemGroup(placement: .keyboard) {
+													Spacer()
+													Button("Done") {
+														isTextEditorFocused = false
+													}
+												}
+											}
 									}
 									
 									// Submit button
@@ -106,7 +162,7 @@ struct SupportView: View {
 										if MFMailComposeViewController.canSendMail() {
 											showingMailView = true
 										} else {
-											showingMailError = true
+											activeAlert = .mailError
 										}
 									}) {
 										Text("Submit Feedback")
@@ -134,28 +190,48 @@ struct SupportView: View {
 				}
 			}
 			.navigationBarHidden(true)
-			.alert(isPresented: $showingAboutInfo) {
-				Alert(
-					title: Text("About HYF Parents"),
-					message: Text("This app was made for Huntley Youth Football and for the Player Parents to put all resources in their hands."),
-					dismissButton: .default(Text("OK"))
-				)
+			.alert(item: $activeAlert) { alertType in
+				switch alertType {
+					case .about:
+						return Alert(
+							title: Text("About HYF Parents"),
+							message: Text("This app was made for Huntley Youth Football and for the Player Parents to put all resources in their hands."),
+							dismissButton: .default(Text("OK"))
+						)
+					case .mailError:
+						return Alert(
+							title: Text("Cannot Send Email"),
+							message: Text("Your device is not configured to send emails. Please check your email settings and try again."),
+							dismissButton: .default(Text("OK"))
+						)
+					case .thankYou:
+						return Alert(
+							title: Text("Thank You!"),
+							message: Text("Your feedback has been submitted. We appreciate your input."),
+							dismissButton: .default(Text("Close")) {
+								shouldNavigateHome = true
+							}
+						)
+				}
 			}
-			.alert(isPresented: $showingMailError) {
-				Alert(
-					title: Text("Cannot Send Email"),
-					message: Text("Your device is not configured to send emails. Please check your email settings and try again."),
-					dismissButton: .default(Text("OK"))
-				)
+			.onChange(of: shouldNavigateHome) {
+				if shouldNavigateHome {
+					selectedTab = 0
+					shouldNavigateHome = false
+				}
 			}
 			.sheet(isPresented: $showingMailView) {
 				MailView(
 					result: { result in
 						switch result {
 							case .success:
-								showingThankYou = true
+								// Clear form first
+								feedbackMessage = ""
+								// Show thank you after a brief delay
+								DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+									activeAlert = .thankYou
+								}
 							case .failure:
-								// Handle failure if needed
 								break
 						}
 						showingMailView = false
@@ -164,18 +240,8 @@ struct SupportView: View {
 					message: feedbackMessage
 				)
 			}
-			.alert(isPresented: $showingThankYou) {
-				Alert(
-					title: Text("Thank You!"),
-					message: Text("Your feedback has been submitted. We appreciate your input."),
-					dismissButton: .default(Text("Close")) {
-						// Reset form and go to home tab
-						feedbackMessage = ""
-						selectedTab = 0 // Switch to home tab
-					}
-				)
-			}
 		}
+	
 		.navigationViewStyle(StackNavigationViewStyle())
 		.accentColor(.red)
 	}
@@ -193,8 +259,8 @@ struct MailView: UIViewControllerRepresentable {
 		let viewController = MFMailComposeViewController()
 		viewController.mailComposeDelegate = context.coordinator
 		
-		// Set hidden recipient
-		viewController.setToRecipients(["ezjensen@gmail.com"])
+		// Set recipient
+		viewController.setToRecipients(["hyfredraiders@gmail.com"])
 		
 		// Set subject based on feedback type
 		viewController.setSubject("HYF Parents App: \(feedbackType)")
@@ -226,11 +292,5 @@ struct MailView: UIViewControllerRepresentable {
 			}
 			parent.presentationMode.wrappedValue.dismiss()
 		}
-	}
-}
-
-struct SupportView_Previews: PreviewProvider {
-	static var previews: some View {
-		SupportView()
 	}
 }
