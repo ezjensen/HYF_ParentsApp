@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		07DA853F2E0612A5000DEEE8 /* HYF Parents.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "HYF Parents.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		077BAAB82E3013E200E90DEF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		077BAADA2E30286F00E90DEF /* HYF Parents.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "HYF Parents.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -32,17 +33,10 @@
 		07DA85362E0612A5000DEEE8 = {
 			isa = PBXGroup;
 			children = (
+				077BAAB82E3013E200E90DEF /* Info.plist */,
 				07DA85412E0612A5000DEEE8 /* HYF Parents */,
-				07DA85402E0612A5000DEEE8 /* Products */,
+				077BAADA2E30286F00E90DEF /* HYF Parents.app */,
 			);
-			sourceTree = "<group>";
-		};
-		07DA85402E0612A5000DEEE8 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				07DA853F2E0612A5000DEEE8 /* HYF Parents.app */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -67,7 +61,7 @@
 			packageProductDependencies = (
 			);
 			productName = "HYF Parents";
-			productReference = 07DA853F2E0612A5000DEEE8 /* HYF Parents.app */;
+			productReference = 077BAADA2E30286F00E90DEF /* HYF Parents.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -95,7 +89,7 @@
 			mainGroup = 07DA85362E0612A5000DEEE8;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 07DA85402E0612A5000DEEE8 /* Products */;
+			productRefGroup = 07DA85362E0612A5000DEEE8;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -178,6 +172,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "";
 				INFOPLIST_KEY_CFBundleDisplayName = "HYF Parents";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
@@ -239,6 +235,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "";
 				INFOPLIST_KEY_CFBundleDisplayName = "HYF Parents";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
@@ -260,9 +258,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = V697DXY8JK;
+				EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "HYF Parents/Info.plist";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "HYF Parents";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -295,9 +294,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = V697DXY8JK;
+				EMBED_ASSET_PACKS_IN_PRODUCT_BUNDLE = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "HYF Parents/Info.plist";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "HYF Parents";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
