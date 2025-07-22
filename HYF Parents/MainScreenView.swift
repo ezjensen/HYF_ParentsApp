@@ -106,7 +106,7 @@ struct MainScreenView: View {
 										Button(action: {
 											showCoachesCorner = true
 										}) {
-											mainButtonView(image: "icon_Coach", label: "Coaches Corner", bg: Color.white.opacity(1.0), fg: .black)
+											mainButtonView(image: "icon_Coach", label: "Coach Resources", bg: Color.white.opacity(1.0), fg: .black)
 										}
 									}
 								}
@@ -139,7 +139,7 @@ struct MainScreenView: View {
 				webViewSheet(title: "TCYFL", url: URL(string: "https://www.tcyfl.net/index.php")!)
 			}
 			.sheet(isPresented: $showCoachesCorner) {
-				webViewSheet(title: "Coaches Corner", url: URL(string: "https://www.huntleyyouthfootball.org/")!)
+				CoachResourcesView()
 			}
 		}
 		.navigationViewStyle(StackNavigationViewStyle()) // Ensure consistent navigation style

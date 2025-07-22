@@ -114,6 +114,7 @@ struct TackleView: View {
 											.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
 										}
 										
+										/* Commented out as this is not ready. HYF doesn't know what direction they want to go yet
 										// VEO Camera - Will open in-app when URL is provided
 										Button(action: {
 											webViewTitle = "VEO Camera"
@@ -122,7 +123,7 @@ struct TackleView: View {
 										}) {
 											mainButtonView(image: "icon_VideoCamera", label: "VEO Camera", bg: Color.white.opacity(1.0), fg: .black)
 										}
-										
+										*/
 										// Invisible placeholder button
 										Button(action: {}) {
 											VStack(spacing: 8) {

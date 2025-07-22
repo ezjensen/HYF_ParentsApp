@@ -8,6 +8,7 @@
 import SwiftUI
 import WebKit
 import PDFKit
+import MessageUI
 
 // MARK: Main ContentView with TabView
 struct ContentView: View {
@@ -46,6 +47,12 @@ struct ContentView: View {
 						Text("Weather")
 					}
 					.tag(4)
+				SupportView(selectedTab: $selectedTab)
+					.tabItem {
+						Image(systemName: "questionmark.circle.fill")
+						Text("Support")
+					}
+					.tag(5)
 			}
 			.accentColor(.red)
 			.onAppear {
