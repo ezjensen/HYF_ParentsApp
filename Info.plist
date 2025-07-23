@@ -64,9 +64,11 @@
 		<string>glazierdrive</string>
 		<string>glazier</string>
 		<string>com.hudl.glazier</string>
+		<string>com.glazierdrive.app</string>
 		<string>playmakerx</string>
 		<string>playmaker</string>
 		<string>com.playmakercoach.x</string>
+		<string>com.playmakerx.app</string>
 	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
