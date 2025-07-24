@@ -36,12 +36,18 @@ struct MainScreenView: View {
 								.padding(.top, 70) // Ensure consistent top padding
 							
 							// Middle: Social links
+							/*
+							 <div>Icons made by <a href="https://www.flaticon.com/authors/pixel-perfect" title="Pixel perfect">Pixel perfect</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/redempticon" title="redempticon">redempticon</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+							 */
 							VStack(spacing: 6) {
 								HStack(spacing: 20) {
 									socialButton(image: "icon_Facebook", url: "https://www.facebook.com/Huntley-Red-Raiders-Youth-Football-League-112134028046472", label: "Facebook")
 									socialButton(image: "icon_Instagram", url: "https://www.instagram.com/hyf_redraiders/", label: "Instagram")
 									socialButton(image: "icon_X", url: "https://twitter.com/huntleyyouthrr", label: "X")
+									//socialButton(image: "icon_YouTube", url: "https://www.huntleyyouthfootball.org/home", label: "Youtube")
+									socialButton(image: "icon_Website", url: "https://www.huntleyyouthfootball.org/home", label: "HYF Red Raiders")
 								}
+							
 								.padding(.vertical, 4)
 								.padding(.horizontal, 8)
 								.background(.ultraThinMaterial.opacity(0.7))

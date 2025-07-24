@@ -73,6 +73,7 @@ struct WeatherAlertsView: View {
 	}
 }
 
+/* Move this declaration to the WebViews.swift file
 struct WebView: UIViewRepresentable {
 	let url: URL
 	
@@ -85,3 +86,4 @@ struct WebView: UIViewRepresentable {
 		uiView.load(request)
 	}
 }
+*/

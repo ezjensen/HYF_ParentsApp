@@ -58,9 +58,11 @@ struct SevenVSevenView: View {
 							// Social links
 							VStack(spacing: 6) {
 								HStack(spacing: 20) {
-									socialButton(image: "icon_Facebook", url: socialURLs["Facebook"] ?? "", label: "Facebook")
-									socialButton(image: "icon_Instagram", url: socialURLs["Instagram"] ?? "", label: "Instagram")
-									socialButton(image: "icon_X", url: socialURLs["X"] ?? "", label: "X")
+									socialButton(image: "icon_Facebook", url: "https://www.facebook.com/Huntley-Red-Raiders-Youth-Football-League-112134028046472", label: "Facebook")
+									socialButton(image: "icon_Instagram", url: "https://www.instagram.com/hyf_redraiders/", label: "Instagram")
+									socialButton(image: "icon_X", url: "https://twitter.com/huntleyyouthrr", label: "X")
+									//socialButton(image: "icon_YouTube", url: "https://www.huntleyyouthfootball.org/home", label: "Youtube")
+									socialButton(image: "icon_Website", url: "https://www.huntleyyouthfootball.org/home", label: "HYF Red Raiders")
 								}
 								.padding(.vertical, 4)
 								.padding(.horizontal, 8)
