@@ -13,6 +13,12 @@ struct GirlsFlagView: View {
 	@State private var showingWebView = false
 	@State private var webViewTitle = ""
 	@State private var webViewURL: URL? = nil
+	@State private var showingCalendarActionSheet = false
+	private let scheduleURLs = [
+		"K-3": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=K3",
+		"4-5th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=4-5th",
+		"6-8th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=6-8th"
+	]
 	@Binding var selectedTab: Int
 	
 	// For preview purposes
@@ -66,11 +72,26 @@ struct GirlsFlagView: View {
 									LazyVGrid(columns: columns, spacing: 25) {
 										// League Calendar - Now opens in-app
 										Button(action: {
-											webViewTitle = "League Calendar"
-											webViewURL = URL(string: "https://www.tcyfl.net/myschedules7man.php")
-											showingWebView = true
+											showingCalendarActionSheet = true
 										}) {
 											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
+										}
+										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
+											Button("K-3") {
+												webViewTitle = "K-3 Schedule"
+												webViewURL = URL(string: scheduleURLs["K-3"] ?? "")
+												showingWebView = true
+											}
+											Button("4-5th") {
+												webViewTitle = "4-5th Schedule"
+												webViewURL = URL(string: scheduleURLs["4-5th"] ?? "")
+												showingWebView = true
+											}
+											Button("6-8th") {
+												webViewTitle = "6-8th Schedule"
+												webViewURL = URL(string: scheduleURLs["6-8th"] ?? "")
+												showingWebView = true
+											}
 										}
 										
 										// League Rules Button
@@ -149,13 +170,13 @@ struct GirlsFlagView: View {
 	// MARK: - Helper to create WebView sheet
 	private func webViewSheet(title: String, url: URL) -> some View {
 		NavigationView {
-			if title == "League Calendar" {
-				// Replace the EnhancedWebView with a standard WebView
-				WebView(url: url)
+			if title.contains("Schedule") {
+				EnhancedWebView(url: url, divToShow: "box5")
 					.navigationBarTitle(title, displayMode: .inline)
 					.navigationBarItems(trailing: Button("Done") {
 						showingWebView = false
 					})
+					.preferredColorScheme(.dark) // Force dark mode
 			} else {
 				StandardWebView(url: url)
 					.navigationBarTitle(title, displayMode: .inline)
@@ -164,6 +185,7 @@ struct GirlsFlagView: View {
 					})
 			}
 		}
+		.accentColor(.red) // Use team color for navigation elements
 	}
 	
 	// MARK: - Button view component
