@@ -67,7 +67,7 @@ struct GirlsFlagView: View {
 										// League Calendar - Now opens in-app
 										Button(action: {
 											webViewTitle = "League Calendar"
-											webViewURL = URL(string: "https://www.tcyfl.net/index.php?option=com_jevents&task=month.calendar&Itemid=1")
+											webViewURL = URL(string: "https://www.tcyfl.net/myschedules7man.php")
 											showingWebView = true
 										}) {
 											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
@@ -150,7 +150,8 @@ struct GirlsFlagView: View {
 	private func webViewSheet(title: String, url: URL) -> some View {
 		NavigationView {
 			if title == "League Calendar" {
-				EnhancedWebView(url: url, divToShow: "box5")
+				// Replace the EnhancedWebView with a standard WebView
+				WebView(url: url)
 					.navigationBarTitle(title, displayMode: .inline)
 					.navigationBarItems(trailing: Button("Done") {
 						showingWebView = false
