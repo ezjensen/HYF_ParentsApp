@@ -6,20 +6,34 @@
 //
 
 import SwiftUI
+import WebKit
+import PDFKit
 
 struct CoachResourcesView: View {
 	@Environment(\.openURL) var openURL
 	@Environment(\.dismiss) var dismiss
 	@State private var showingWebView = false
+	@State private var showingPDFView = false
+	@State private var selectedPDFURL: URL?
+	@State private var selectedPDFTitle: String = ""
 	@State private var webViewTitle = ""
 	@State private var webViewURL: URL? = nil
 	@State private var showingAppStoreAlert = false
+	@State private var showingSafetyResourcesList = false
 	@State private var appToInstall = ""
 	@State private var appStoreURL: URL?
 	
 	let columns = [
 		GridItem(.fixed(100), spacing: 60),
 		GridItem(.fixed(100), spacing: 60)
+	]
+	
+	// Safety resource documents
+	let safetyResources = [
+		(title: "10 Questions About Head Safety", url: "https://cdn1.sportngin.com/attachments/document/6e68-2618765/10_questions_about_head_safety.pdf"),
+		(title: "Heat and Hydration Guidelines", url: "https://cdn1.sportngin.com/attachments/document/abf1-2618766/Heat_And_Hydration_Guidelines.pdf"),
+		(title: "TCYFL Concussion Flow Chart", url: "https://cdn1.sportngin.com/attachments/document/c0a4-2618767/TCYFL_Concussion_Flow_Chart_.pdf"),
+		(title: "TCYFL Concussion Policy", url: "https://cdn1.sportngin.com/attachments/document/33f3-2618769/TCYFL_Concussion_Policy.docx")
 	]
 	
 	var body: some View {
@@ -44,6 +58,8 @@ struct CoachResourcesView: View {
 									socialButton(image: "icon_Facebook", url: "https://www.facebook.com/Huntley-Red-Raiders-Youth-Football-League-112134028046472", label: "Facebook")
 									socialButton(image: "icon_Instagram", url: "https://www.instagram.com/hyf_redraiders/", label: "Instagram")
 									socialButton(image: "icon_X", url: "https://twitter.com/huntleyyouthrr", label: "X")
+									//socialButton(image: "icon_YouTube", url: "https://www.huntleyyouthfootball.org/home", label: "Youtube")
+									socialButton(image: "icon_Website", url: "https://www.huntleyyouthfootball.org/home", label: "HYF Red Raiders")
 								}
 								.padding(.vertical, 4)
 								.padding(.horizontal, 8)
@@ -68,11 +84,9 @@ struct CoachResourcesView: View {
 											mainButtonView(image: "icon_TCYFL", label: "TCYFL Passport", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										
-										// Safety Resources button
+										// Safety Resources button - Now shows a list
 										Button(action: {
-											webViewTitle = "Safety Resources"
-											webViewURL = URL(string: "https://www.huntleyyouthfootball.org/page/show/6975602-safety")
-											showingWebView = true
+											showingSafetyResourcesList = true
 										}) {
 											mainButtonView(image: "icon_HYF_Safety", label: "Safety Resources", bg: Color.white.opacity(1.0), fg: .black)
 										}
@@ -145,6 +159,14 @@ struct CoachResourcesView: View {
 					webViewSheet(title: webViewTitle, url: url)
 				}
 			}
+			.sheet(isPresented: $showingPDFView) {
+				if let url = selectedPDFURL {
+					pdfViewSheet(title: selectedPDFTitle, url: url)
+				}
+			}
+			.sheet(isPresented: $showingSafetyResourcesList) {
+				safetyResourcesListView()
+			}
 			.alert(isPresented: $showingAppStoreAlert) {
 				Alert(
 					title: Text("Install \(appToInstall)"),
@@ -162,6 +184,67 @@ struct CoachResourcesView: View {
 		.accentColor(.red)
 	}
 	
+	// MARK: - Safety Resources List View
+	private func safetyResourcesListView() -> some View {
+		NavigationView {
+			List {
+				ForEach(safetyResources, id: \.title) { resource in
+					Button(action: {
+						selectedPDFTitle = resource.title
+						selectedPDFURL = URL(string: resource.url)
+						showingSafetyResourcesList = false
+						
+						// Check if it's a PDF or DOCX file
+						if resource.url.hasSuffix(".pdf") {
+							showingPDFView = true
+						} else if resource.url.hasSuffix(".docx") {
+							// Use Microsoft's Office web viewer for DOCX files
+							let docURL = resource.url
+							let encodedURL = docURL.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? docURL
+							let viewerURL = "https://view.officeapps.live.com/op/view.aspx?src=\(encodedURL)"
+							
+							webViewTitle = resource.title
+							webViewURL = URL(string: viewerURL)
+							showingWebView = true
+						} else {
+							// Fall back to webview for other types
+							webViewTitle = resource.title
+							webViewURL = URL(string: resource.url)
+							showingWebView = true
+						}
+					}) {
+						HStack {
+							// Show appropriate icon based on file type
+							if resource.url.hasSuffix(".pdf") {
+								Image(systemName: "doc.fill")
+									.foregroundColor(.red)
+							} else if resource.url.hasSuffix(".docx") {
+								Image(systemName: "doc.text.fill")
+									.foregroundColor(.blue)
+							} else {
+								Image(systemName: "link")
+									.foregroundColor(.gray)
+							}
+							
+							Text(resource.title)
+								.foregroundColor(.primary)
+							Spacer()
+							Image(systemName: "chevron.right")
+								.foregroundColor(.gray)
+								.font(.caption)
+						}
+						.padding(.vertical, 4)
+					}
+				}
+			}
+			.navigationBarTitle("Safety Resources", displayMode: .inline)
+			.navigationBarItems(trailing: Button("Done") {
+				showingSafetyResourcesList = false
+			})
+		}
+		.accentColor(.red)
+	}
+	
 	// MARK: - Helper to create WebView sheet
 	private func webViewSheet(title: String, url: URL) -> some View {
 		NavigationView {
@@ -169,6 +252,18 @@ struct CoachResourcesView: View {
 				.navigationBarTitle(title, displayMode: .inline)
 				.navigationBarItems(trailing: Button("Done") {
 					showingWebView = false
+				})
+		}
+		.accentColor(.red)
+	}
+	
+	// MARK: - Helper to create PDF View sheet
+	private func pdfViewSheet(title: String, url: URL) -> some View {
+		NavigationView {
+			PDFPreviewView(url: url)
+				.navigationBarTitle(title, displayMode: .inline)
+				.navigationBarItems(trailing: Button("Done") {
+					showingPDFView = false
 				})
 		}
 		.accentColor(.red)
@@ -297,7 +392,7 @@ struct CoachResourcesView: View {
 		
 		// First try with the direct app URL if available
 		if let directURL = appURLs[appName],
-			let url = URL(string: directURL) {
+		   let url = URL(string: directURL) {
 			print("Trying direct URL: \(directURL)")
 			
 			// Check if we can open it
@@ -321,10 +416,10 @@ struct CoachResourcesView: View {
 		print("Showing App Store prompt for \(appName)")
 		showAppStorePrompt(appName: appName, appStoreId: appStoreId)
 	}
-		
-	struct CoachResourcesView_Previews: PreviewProvider {
-		static var previews: some View {
-			CoachResourcesView()
-		}
+}
+
+struct CoachResourcesView_Previews: PreviewProvider {
+	static var previews: some View {
+		CoachResourcesView()
 	}
 }

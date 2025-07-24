@@ -15,8 +15,8 @@ struct GirlsFlagView: View {
 	@State private var webViewURL: URL? = nil
 	@State private var showingCalendarActionSheet = false
 	private let scheduleURLs = [
-		"K-3": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=K3",
-		"4-5th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=4-5th",
+		//"K-3": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=K3",
+		"3-5th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=4-5th",
 		"6-8th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=6-8th"
 	]
 	@Binding var selectedTab: Int
@@ -79,14 +79,16 @@ struct GirlsFlagView: View {
 											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
+											/* Level is not active for 2025 Season
 											Button("K-3") {
 												webViewTitle = "K-3 Schedule"
 												webViewURL = URL(string: scheduleURLs["K-3"] ?? "")
 												showingWebView = true
 											}
-											Button("4-5th") {
-												webViewTitle = "4-5th Schedule"
-												webViewURL = URL(string: scheduleURLs["4-5th"] ?? "")
+											 */
+											Button("3-5th") {
+												webViewTitle = "3-5th Schedule"
+												webViewURL = URL(string: scheduleURLs["3-5th"] ?? "")
 												showingWebView = true
 											}
 											Button("6-8th") {
