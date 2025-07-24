@@ -185,20 +185,20 @@ struct CoachResourcesView: View {
 	}
 	
 	// MARK: - Safety Resources List View
+	// MARK: - Safety Resources List View
 	private func safetyResourcesListView() -> some View {
 		NavigationView {
 			List {
 				ForEach(safetyResources, id: \.title) { resource in
 					Button(action: {
 						selectedPDFTitle = resource.title
-						selectedPDFURL = URL(string: resource.url)
-						showingSafetyResourcesList = false
 						
 						// Check if it's a PDF or DOCX file
 						if resource.url.hasSuffix(".pdf") {
+							selectedPDFURL = URL(string: resource.url)
 							showingPDFView = true
-						} else if resource.url.hasSuffix(".docx") {
-							// Use Microsoft's Office web viewer for DOCX files
+						} else if resource.url.hasSuffix(".docx") || resource.url.hasSuffix(".doc") {
+							// Use Microsoft's Office web viewer for Word documents
 							let docURL = resource.url
 							let encodedURL = docURL.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? docURL
 							let viewerURL = "https://view.officeapps.live.com/op/view.aspx?src=\(encodedURL)"
@@ -207,18 +207,20 @@ struct CoachResourcesView: View {
 							webViewURL = URL(string: viewerURL)
 							showingWebView = true
 						} else {
-							// Fall back to webview for other types
+							// Fall back to regular webview for other file types
 							webViewTitle = resource.title
 							webViewURL = URL(string: resource.url)
 							showingWebView = true
 						}
+						
+						showingSafetyResourcesList = false
 					}) {
 						HStack {
 							// Show appropriate icon based on file type
 							if resource.url.hasSuffix(".pdf") {
 								Image(systemName: "doc.fill")
 									.foregroundColor(.red)
-							} else if resource.url.hasSuffix(".docx") {
+							} else if resource.url.hasSuffix(".docx") || resource.url.hasSuffix(".doc") {
 								Image(systemName: "doc.text.fill")
 									.foregroundColor(.blue)
 							} else {
