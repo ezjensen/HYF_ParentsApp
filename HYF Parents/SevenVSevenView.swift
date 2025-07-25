@@ -17,6 +17,7 @@ struct SevenVSevenView: View {
 	@State private var webViewTitle = ""
 	@State private var webViewURL: URL? = nil
 	@State private var showingCalendarActionSheet = false
+	@State private var rulesTitle: String = "League Rules"
 	@Binding var selectedTab: Int
 	
 	// For preview purposes
@@ -126,7 +127,7 @@ struct SevenVSevenView: View {
 												Image("icon_Rules")
 													.resizable()
 													.frame(width: 70, height: 70)
-												Text("League Rules")
+												Text("7v7 League Rules")
 													.font(.headline)
 													.fontWeight(.semibold)
 													.foregroundColor(.black)
@@ -143,10 +144,12 @@ struct SevenVSevenView: View {
 										.confirmationDialog("Select Rules", isPresented: $showingRulesActionSheet) {
 											Button("K-3 Rules") {
 												selectedRulesURL = URL(string: "https://www.tcyfl.net/grabit.php?file=2025FINALK3_rules.pdf")
+												rulesTitle = "7v7 K-3 Rules"
 												showingPDFView = true
 											}
 											Button("4-8 Rules") {
 												selectedRulesURL = URL(string: "https://www.tcyfl.net/grabit.php?file=2025FINAL7_7_rules.pdf")
+												rulesTitle = "7v7 4-8 Rules"
 												showingPDFView = true
 											}
 										}
@@ -192,7 +195,10 @@ struct SevenVSevenView: View {
 			}
 			.sheet(isPresented: $showingPDFView) {
 				if let url = selectedRulesURL {
-					PDFPreviewView(url: url)
+					NavigationView {
+						PDFPreviewView(url: url, title: rulesTitle)
+					}
+					.accentColor(.red)
 				}
 			}
 			.sheet(isPresented: $showingWebView) {

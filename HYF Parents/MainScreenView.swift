@@ -196,8 +196,6 @@ struct MainScreenView: View {
 		.background(bg)
 		.cornerRadius(16)
 		.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
-		.buttonStyle(.plain)
-		.accessibilityLabel(label)
 	}
 	
 	// MARK: - Social media button builder

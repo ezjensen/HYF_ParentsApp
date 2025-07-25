@@ -10,9 +10,16 @@ import PDFKit
 
 struct PDFPreviewView: View {
 	let url: URL
+	var title: String
 	@State private var searchText: String = ""
 	@State private var searchResults: [PDFSelection] = []
 	@State private var currentResultIndex: Int = 0
+	
+	// Add a default parameter for title
+	init(url: URL, title: String = "PDF Document") {
+		self.url = url
+		self.title = title
+	}
 	
 	var body: some View {
 		VStack {
@@ -37,7 +44,7 @@ struct PDFPreviewView: View {
 			}
 			PDFKitView(url: url, searchSelection: searchResults.isEmpty ? nil : searchResults[currentResultIndex])
 		}
-		.navigationTitle("League Rules")
+		.navigationTitle(title)
 		.navigationBarTitleDisplayMode(.inline)
 	}
 	
@@ -65,6 +72,12 @@ struct PDFKitView: UIViewRepresentable {
 	func makeUIView(context: Context) -> PDFView {
 		let pdfView = PDFView()
 		pdfView.autoScales = true
+		
+		// Configure for better viewing
+		pdfView.displayMode = .singlePage
+		pdfView.displayDirection = .vertical
+		pdfView.usePageViewController(true)
+		
 		if let document = PDFDocument(url: url) {
 			pdfView.document = document
 		}
@@ -73,8 +86,37 @@ struct PDFKitView: UIViewRepresentable {
 	
 	func updateUIView(_ pdfView: PDFView, context: Context) {
 		if let selection = searchSelection {
-			pdfView.setCurrentSelection(selection, animate: true)
-			pdfView.go(to: selection)
+			// Clear any previous highlights
+			if let document = pdfView.document {
+				for i in 0..<document.pageCount {
+					if let page = document.page(at: i) {
+						for annotation in page.annotations {
+							// Compare strings properly
+							if annotation.type == PDFAnnotationSubtype.highlight.rawValue {
+								page.removeAnnotation(annotation)
+							}
+						}
+					}
+				}
+			}
+			
+			// Create a highlight annotation
+			if let page = selection.pages.first {
+				// Get the bounds for this selection on this specific page
+				let pageBounds = selection.bounds(for: page)
+				
+				// Create highlight annotation with proper properties
+				let highlightAnnotation = PDFAnnotation(bounds: pageBounds, forType: .highlight, withProperties: nil)
+				highlightAnnotation.color = UIColor.yellow.withAlphaComponent(0.5)
+				page.addAnnotation(highlightAnnotation)
+				
+				// Go to the page containing the result
+				pdfView.go(to: selection)
+				
+				// Set the display to properly show the selection
+				let point = CGPoint(x: pageBounds.midX, y: pageBounds.midY)
+				pdfView.go(to: PDFDestination(page: page, at: point))
+			}
 		}
 	}
 }

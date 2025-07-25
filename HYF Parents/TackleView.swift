@@ -98,13 +98,13 @@ struct TackleView: View {
 										
 										// League Rules
 										NavigationLink {
-											PDFPreviewView(url: URL(string: "https://www.tcyfl.net/grabit.php?file=TCYFL_Football_Playing_Rules_FINAL.pdf")!)
+											PDFPreviewView(url: URL(string: "https://www.tcyfl.net/grabit.php?file=TCYFL_Football_Playing_Rules_FINAL.pdf")!, title: "Tackle League Rules")
 										} label: {
 											VStack(spacing: 8) {
 												Image("icon_Rules")
 													.resizable()
 													.frame(width: 70, height: 70)
-												Text("League Rules")
+												Text("Tackle League Rules")
 													.font(.headline)
 													.fontWeight(.semibold)
 													.foregroundColor(.black)

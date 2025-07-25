@@ -76,6 +76,7 @@ struct CoachResourcesView: View {
 								VStack {
 									LazyVGrid(columns: columns, spacing: 25) {
 										// TCYFL Passport button
+										// TCYFL Passport button - Fixed implementation
 										Button(action: {
 											webViewTitle = "TCYFL Passport"
 											webViewURL = URL(string: "https://tcyfl.athleticpassports.com/login")
@@ -185,7 +186,6 @@ struct CoachResourcesView: View {
 	}
 	
 	// MARK: - Safety Resources List View
-	// MARK: - Safety Resources List View
 	private func safetyResourcesListView() -> some View {
 		NavigationView {
 			List {
@@ -198,14 +198,9 @@ struct CoachResourcesView: View {
 							selectedPDFURL = URL(string: resource.url)
 							showingPDFView = true
 						} else if resource.url.hasSuffix(".docx") || resource.url.hasSuffix(".doc") {
-							// Use Microsoft's Office web viewer for Word documents
-							let docURL = resource.url
-							let encodedURL = docURL.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? docURL
-							let viewerURL = "https://view.officeapps.live.com/op/view.aspx?src=\(encodedURL)"
-							
-							webViewTitle = resource.title
-							webViewURL = URL(string: viewerURL)
-							showingWebView = true
+							// Use direct URL without Microsoft's viewer
+							selectedPDFURL = URL(string: resource.url)
+							showingPDFView = true
 						} else {
 							// Fall back to regular webview for other file types
 							webViewTitle = resource.title
@@ -352,28 +347,28 @@ struct CoachResourcesView: View {
 	
 	private func openAppWithUniversalLink(appName: String, appStoreId: String) {
 		// First try Universal Links for these specific apps
-		var universalLinkURL: URL?
+		var universalLinkString: String?
 		
 		if appName == "Glazier Drive" {
-			universalLinkURL = URL(string: "https://drive.glazier.io")
+			universalLinkString = "https://drive.glazier.io"
 		} else if appName == "Playmaker X" {
-			universalLinkURL = URL(string: "https://app.playmakerx.com")
+			universalLinkString = "https://app.playmakerx.com"
 		}
 		
 		// Try to open with universal link if available
-		if let universalLink = universalLinkURL {
+		if let linkString = universalLinkString, let universalLink = URL(string: linkString) {
 			UIApplication.shared.open(universalLink, options: [:]) { success in
 				if !success {
 					// Fall back to App Store link if universal link fails
 					if let appStoreURL = URL(string: "https://apps.apple.com/app/\(appStoreId)") {
-						UIApplication.shared.open(appStoreURL, options: [:]) { _ in }
+						UIApplication.shared.open(appStoreURL, options: [:], completionHandler: nil)
 					}
 				}
 			}
 		} else {
 			// Use App Store URL as fallback
 			if let appStoreURL = URL(string: "https://apps.apple.com/app/\(appStoreId)") {
-				UIApplication.shared.open(appStoreURL, options: [:]) { _ in }
+				UIApplication.shared.open(appStoreURL, options: [:], completionHandler: nil)
 			}
 		}
 	}

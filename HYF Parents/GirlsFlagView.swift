@@ -14,6 +14,11 @@ struct GirlsFlagView: View {
 	@State private var webViewTitle = ""
 	@State private var webViewURL: URL? = nil
 	@State private var showingCalendarActionSheet = false
+	@State private var showingRulesActionSheet = false
+	@State private var selectedRulesURL: URL? = nil
+	@State private var showingPDFView = false
+	@State private var rulesTitle: String = "League Rules"
+
 	private let scheduleURLs = [
 		//"K-3": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=K3",
 		"3-5th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=4-5th",
@@ -100,13 +105,13 @@ struct GirlsFlagView: View {
 										
 										// League Rules Button
 										NavigationLink {
-											PDFPreviewView(url: URL(string: "https://www.tcyfl.net/grabit.php?file=TCYFL_Girls_Fall_Flag_Rules_2024.pdf")!)
+											PDFPreviewView(url: URL(string: "https://www.tcyfl.net/grabit.php?file=TCYFL_Girls_Fall_Flag_Rules_2024.pdf")!, title: "Girl's Flag League Rules")
 										} label: {
 											VStack(spacing: 8) {
 												Image("icon_Rules")
 													.resizable()
 													.frame(width: 70, height: 70)
-												Text("League Rules")
+												Text("Girl's Flag League Rules")
 													.font(.headline)
 													.fontWeight(.semibold)
 													.foregroundColor(.black)
