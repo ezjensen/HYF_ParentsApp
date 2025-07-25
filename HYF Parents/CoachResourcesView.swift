@@ -190,25 +190,22 @@ struct CoachResourcesView: View {
 		NavigationView {
 			List {
 				ForEach(safetyResources, id: \.title) { resource in
-					Button(action: {
-						selectedPDFTitle = resource.title
-						
-						// Check if it's a PDF or DOCX file
+					NavigationLink(destination: {
 						if resource.url.hasSuffix(".pdf") {
-							selectedPDFURL = URL(string: resource.url)
-							showingPDFView = true
+							if let url = URL(string: resource.url) {
+								PDFPreviewView(url: url, title: resource.title)
+							}
 						} else if resource.url.hasSuffix(".docx") || resource.url.hasSuffix(".doc") {
-							// Use direct URL without Microsoft's viewer
-							selectedPDFURL = URL(string: resource.url)
-							showingPDFView = true
+							if let url = URL(string: resource.url) {
+								StandardWebView(url: url)
+									.navigationBarTitle(resource.title, displayMode: .inline)
+							}
 						} else {
-							// Fall back to regular webview for other file types
-							webViewTitle = resource.title
-							webViewURL = URL(string: resource.url)
-							showingWebView = true
+							if let url = URL(string: resource.url) {
+								StandardWebView(url: url)
+									.navigationBarTitle(resource.title, displayMode: .inline)
+							}
 						}
-						
-						showingSafetyResourcesList = false
 					}) {
 						HStack {
 							// Show appropriate icon based on file type
@@ -225,10 +222,8 @@ struct CoachResourcesView: View {
 							
 							Text(resource.title)
 								.foregroundColor(.primary)
-							Spacer()
-							Image(systemName: "chevron.right")
-								.foregroundColor(.gray)
-								.font(.caption)
+							
+							// Remove this Spacer and Image to avoid double chevrons
 						}
 						.padding(.vertical, 4)
 					}
@@ -257,7 +252,7 @@ struct CoachResourcesView: View {
 	// MARK: - Helper to create PDF View sheet
 	private func pdfViewSheet(title: String, url: URL) -> some View {
 		NavigationView {
-			PDFPreviewView(url: url)
+			PDFPreviewView(url: url, title: title)
 				.navigationBarTitle(title, displayMode: .inline)
 				.navigationBarItems(trailing: Button("Done") {
 					showingPDFView = false
