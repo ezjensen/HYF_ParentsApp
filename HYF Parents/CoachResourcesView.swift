@@ -75,12 +75,12 @@ struct CoachResourcesView: View {
 							VStack {
 								VStack {
 									LazyVGrid(columns: columns, spacing: 25) {
-										// TCYFL Passport button
-										// TCYFL Passport button - Fixed implementation
+										// TCYFL Passport button - Enhanced implementation
+										// TCYFL Passport button - Updated to open in default browser
 										Button(action: {
-											webViewTitle = "TCYFL Passport"
-											webViewURL = URL(string: "https://tcyfl.athleticpassports.com/login")
-											showingWebView = true
+											if let url = URL(string: "https://tcyfl.athleticpassports.com/login") {
+												UIApplication.shared.open(url, options: [:], completionHandler: nil)
+											}
 										}) {
 											mainButtonView(image: "icon_TCYFL", label: "TCYFL Passport", bg: Color.white.opacity(1.0), fg: .black)
 										}
