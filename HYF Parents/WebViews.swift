@@ -59,7 +59,19 @@ struct WebView: UIViewRepresentable {
 		return webView
 	}
 	
-	func updateUIView(_ uiView: WKWebView, context: Context) {}
+	func updateUIView(_ uiView: WKWebView, context: Context) {
+		// Check if the current URL is different from the one we want to load
+		if let currentURL = uiView.url, currentURL != url {
+			var request = URLRequest(url: url)
+			request.cachePolicy = .reloadIgnoringLocalCacheData
+			uiView.load(request)
+		} else if uiView.url == nil {
+			// Initial load if no URL is currently loaded
+			var request = URLRequest(url: url)
+			request.cachePolicy = .reloadIgnoringLocalCacheData
+			uiView.load(request)
+		}
+	}
 	
 	func makeCoordinator() -> Coordinator {
 		Coordinator(self)
