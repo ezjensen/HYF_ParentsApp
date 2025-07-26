@@ -14,8 +14,6 @@ struct TackleView: View {
 	@State private var webViewTitle = ""
 	@State private var webViewURL: URL? = nil
 	@State private var showingCalendarActionSheet = false
-	@State private var showingBIG10ActionSheet = false
-	@State private var showingPACActionSheet = false
 	@Binding var selectedTab: Int
 	
 	// For preview purposes
@@ -76,12 +74,58 @@ struct TackleView: View {
 										}) {
 											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
 										}
-										.confirmationDialog("Select Conference", isPresented: $showingCalendarActionSheet) {
-											Button("BIG 10 Schedules") {
-												showingBIG10ActionSheet = true
+										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
+											// BIG 10 Divisions
+											Button("BIG 10 - Varsity") {
+												webViewTitle = "Varsity Schedule"
+												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=varsity")
+												showingWebView = true
 											}
-											Button("PAC Schedules") {
-												showingPACActionSheet = true
+											Button("BIG 10 - JV") {
+												webViewTitle = "JV Schedule"
+												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=jv")
+												showingWebView = true
+											}
+											Button("BIG 10 - Lightweight") {
+												webViewTitle = "Lightweight Schedule"
+												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=lightweight")
+												showingWebView = true
+											}
+											Button("BIG 10 - Middleweight") {
+												webViewTitle = "Middleweight Schedule"
+												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=middleweight")
+												showingWebView = true
+											}
+											Button("BIG 10 - Feather") {
+												webViewTitle = "Feather Schedule"
+												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=feather")
+												showingWebView = true
+											}
+											Button("BIG 10 - Bantam") {
+												webViewTitle = "Bantam Schedule"
+												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=bantam")
+												showingWebView = true
+											}
+											// PAC Divisions
+											Button("PAC - Middleweight") {
+												webViewTitle = "Middleweight Schedule"
+												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=pac10&division=middleweight")
+												showingWebView = true
+											}
+											Button("PAC - Featherweight") {
+												webViewTitle = "Featherweight Schedule"
+												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=pac10&division=featherweight")
+												showingWebView = true
+											}
+											Button("PAC - Bantam") {
+												webViewTitle = "Bantam Schedule"
+												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=pac10&division=bantam")
+												showingWebView = true
+											}
+											Button("PAC - Flyweight") {
+												webViewTitle = "Flyweight Schedule"
+												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=pac10&division=flyweight")
+												showingWebView = true
 											}
 										}
 										
@@ -162,125 +206,6 @@ struct TackleView: View {
 			}
 		}
 		.navigationViewStyle(StackNavigationViewStyle())
-		.sheet(isPresented: $showingBIG10ActionSheet) {
-			ZStack {
-				// Background blur
-				Color.black.opacity(0.9)
-					.edgesIgnoringSafeArea(.all)
-				
-				VStack(spacing: 20) {
-					Text("BIG 10 Divisions")
-						.font(.title)
-						.fontWeight(.bold)
-						.foregroundColor(.white)
-						.padding(.top, 20)
-					
-					ScrollView {
-						VStack(spacing: 15) {
-							divisionButton(title: "Varsity", url: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=varsity")
-							divisionButton(title: "JV", url: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=jv")
-							divisionButton(title: "Lightweight", url: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=lightweight")
-							divisionButton(title: "Middleweight", url: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=middleweight")
-							divisionButton(title: "Feather", url: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=feather")
-							divisionButton(title: "Bantam", url: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=bantam")
-						}
-						.padding()
-					}
-					
-					Button("Close") {
-						showingBIG10ActionSheet = false
-					}
-					.font(.headline)
-					.foregroundColor(.white)
-					.padding(.vertical, 15)
-					.padding(.horizontal, 40)
-					.background(Color.red)
-					.cornerRadius(10)
-					.padding(.bottom, 20)
-				}
-				.padding()
-			}
-		}
-		.sheet(isPresented: $showingPACActionSheet) {
-			ZStack {
-				// Background blur
-				Color.black.opacity(0.9)
-					.edgesIgnoringSafeArea(.all)
-				
-				VStack(spacing: 20) {
-					Text("PAC Divisions")
-						.font(.title)
-						.fontWeight(.bold)
-						.foregroundColor(.white)
-						.padding(.top, 20)
-					
-					ScrollView {
-						VStack(spacing: 15) {
-							divisionButton(title: "Middleweight", url: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=pac10&division=middleweight")
-							divisionButton(title: "Featherweight", url: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=pac10&division=featherweight")
-							divisionButton(title: "Bantam", url: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=pac10&division=bantam")
-							divisionButton(title: "Flyweight", url: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=pac10&division=flyweight")
-						}
-						.padding()
-					}
-					
-					Button("Close") {
-						showingPACActionSheet = false
-					}
-					.font(.headline)
-					.foregroundColor(.white)
-					.padding(.vertical, 15)
-					.padding(.horizontal, 40)
-					.background(Color.red)
-					.cornerRadius(10)
-					.padding(.bottom, 20)
-				}
-				.padding()
-			}
-		}
-	}
-	
-	// MARK: - Division Button with Glass Effect
-	private func divisionButton(title: String, url: String) -> some View {
-		Button {
-			webViewTitle = "\(title) Schedule"
-			webViewURL = URL(string: url)
-			showingWebView = true
-			showingBIG10ActionSheet = false
-			showingPACActionSheet = false
-		} label: {
-			HStack {
-				Text(title)
-					.font(.headline)
-					.fontWeight(.semibold)
-					.foregroundColor(.white)
-				
-				Spacer()
-				
-				Image(systemName: "chevron.right")
-					.foregroundColor(.white)
-			}
-			.padding()
-			.frame(maxWidth: .infinity)
-			.background(
-				RoundedRectangle(cornerRadius: 16)
-					.fill(Color.white.opacity(0.15))
-					.background(
-						RoundedRectangle(cornerRadius: 16)
-							.fill(.ultraThinMaterial)
-							.blur(radius: 0.5)
-					)
-			)
-			.overlay(
-				RoundedRectangle(cornerRadius: 16)
-					.stroke(LinearGradient(
-						gradient: Gradient(colors: [.white.opacity(0.6), .clear, .white.opacity(0.3)]),
-						startPoint: .topLeading,
-						endPoint: .bottomTrailing
-					), lineWidth: 1.5)
-			)
-			.shadow(color: Color.white.opacity(0.1), radius: 8, x: 0, y: 4)
-		}
 	}
 	
 	// MARK: - Helper to create WebView sheet in TackleView.swift
