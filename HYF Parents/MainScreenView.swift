@@ -17,6 +17,9 @@ struct MainScreenView: View {
 	@State private var showTCYFL = false
 	@State private var showFieldMaps = false
 	@State private var showCoachesCorner = false
+	@State private var showingWebView = false
+	@State private var webViewTitle = ""
+	@State private var webViewURL: URL? = nil
 	
 	let columns = [
 		GridItem(.fixed(100), spacing: 60),
@@ -69,11 +72,13 @@ struct MainScreenView: View {
 											mainButtonView(image: "icon_Calendar", label: "Important Dates", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										
-										// Field Maps - Now opens in-app
+										// Field Maps button - Modified to display Box 5 within the app
 										Button(action: {
-											showFieldMaps = true
+											webViewTitle = "Field Locations"
+											webViewURL = URL(string: "https://www.tcyfl.net/maps.php")
+											showingWebView = true
 										}) {
-											mainButtonView(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black)
+											mainButtonView(image: "icon_Maps", label: "Field  Locations", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										
 										/*
@@ -108,7 +113,7 @@ struct MainScreenView: View {
 											mainButtonView(image: "icon_TCYFL", label: "TCYFL", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										
-										// Coaches Corner button
+										// Coaches Resources button
 										Button(action: {
 											showCoachesCorner = true
 										}) {
@@ -132,9 +137,18 @@ struct MainScreenView: View {
 			.sheet(isPresented: $showImportantDates) {
 				webViewSheet(title: "Important Dates", url: URL(string: "https://www.huntleyyouthfootball.org/page/show/6967331-important-dates")!)
 			}
+			// In your MainScreenView.swift file, modify the .sheet for showFieldMaps:
+			/*
 			.sheet(isPresented: $showFieldMaps) {
-				webViewSheet(title: "Field Maps", url: URL(string: "https://www.tcyfl.net/maps.php")!)
+				NavigationView {
+					EnhancedWebView(url: URL(string: "https://www.tcyfl.net/maps.php")!, divToShow: "")
+						.navigationBarTitle("Field Locations", displayMode: .inline)
+						.navigationBarItems(trailing: Button("Done") {
+							showFieldMaps = false
+						})
+				}
 			}
+			 */
 			.sheet(isPresented: $showRegistration) {
 				webViewSheet(title: "Registration", url: URL(string: "https://www.huntleyyouthfootball.org/page/show/6967329-registration")!)
 			}
@@ -147,35 +161,50 @@ struct MainScreenView: View {
 			.sheet(isPresented: $showCoachesCorner) {
 				CoachResourcesView()
 			}
+			// Add this sheet for webViewURL
+			.sheet(isPresented: $showingWebView) {
+				if let url = webViewURL {
+					webViewSheet(title: webViewTitle, url: url)
+				}
+			}
 		}
 		.navigationViewStyle(StackNavigationViewStyle()) // Ensure consistent navigation style
 	}
 	
 	// MARK: - Helper to create WebView sheet
+	// MARK: - Helper to create WebView sheet
 	private func webViewSheet(title: String, url: URL) -> some View {
 		NavigationView {
-			WebView(url: url)
-				.navigationBarTitle(title, displayMode: .inline)
-				.navigationBarItems(trailing: Button("Done") {
-					// Close the appropriate sheet based on title
-					switch title {
-						case "Important Dates":
-							showImportantDates = false
-						case "Field Maps":
-							showFieldMaps = false
-						case "Registration":
-							showRegistration = false
-						case "Spirit Store":
-							showSpiritStore = false
-						case "TCYFL":
-							showTCYFL = false
-						case "Coaches Corner":
-							showCoachesCorner = false
-						default:
-							break
-					}
-				})
+			if title == "Field Locations" {
+				EnhancedWebView(url: url, divToShow: "")
+					.navigationBarTitle(title, displayMode: .inline)
+					.navigationBarItems(trailing: Button("Done") {
+						showingWebView = false
+					})
+					.preferredColorScheme(.dark)
+			} else {
+				WebView(url: url)
+					.navigationBarTitle(title, displayMode: .inline)
+					.navigationBarItems(trailing: Button("Done") {
+						// Close the appropriate sheet based on title
+						switch title {
+							case "Important Dates":
+								showImportantDates = false
+							case "Registration":
+								showRegistration = false
+							case "Spirit Store":
+								showSpiritStore = false
+							case "TCYFL":
+								showTCYFL = false
+							case "Coaches Corner":
+								showCoachesCorner = false
+							default:
+								showingWebView = false
+						}
+					})
+			}
 		}
+		.accentColor(.red)
 	}
 	
 	// MARK: - Button view component
