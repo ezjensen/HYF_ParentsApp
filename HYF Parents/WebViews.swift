@@ -142,14 +142,10 @@ struct EnhancedWebView: UIViewRepresentable {
 		}
 		
 		private func loadFields() {
-			fieldService.fetchFields { fetchedFields, error in
-				if let fields = fetchedFields {
-					self.fields = fields
-					print("Successfully loaded \(fields.count) fields from Supabase")
-				} else if let error = error {
-					print("Error fetching fields: \(error.localizedDescription)")
-				}
-			}
+			let fieldService = FieldService()
+			fieldService.fetchFields()
+			self.fields = fieldService.fields
+			print("Successfully loaded \(fieldService.fields.count) fields from static data")
 		}
 		
 		// Handle messages from JavaScript
@@ -193,9 +189,30 @@ struct EnhancedWebView: UIViewRepresentable {
 		}
 		
 		private func sendHardcodedFields(to webView: WKWebView) {
-			// Use the hardcoded fields from our new FieldLocationsData struct
-			let script = "receiveFieldsData('\(FieldLocationsData.fieldsJSON)');"
-			webView.evaluateJavaScript(script)
+			// Create a field service instance to access the fields
+			let fieldService = FieldService()
+			fieldService.fetchFields()
+			
+			do {
+				let encoder = JSONEncoder()
+				encoder.outputFormatting = .prettyPrinted
+				let data = try encoder.encode(fieldService.fields)
+				
+				if let jsonString = String(data: data, encoding: .utf8) {
+					print("Sending \(fieldService.fields.count) fields to WebView")
+					let script = "fieldsData = \(jsonString); checkDataAndRender();"
+					
+					webView.evaluateJavaScript(script) { result, error in
+						if let error = error {
+							print("Error sending fields data: \(error)")
+						} else {
+							print("Fields data sent successfully")
+						}
+					}
+				}
+			} catch {
+				print("Failed to encode fields: \(error)")
+			}
 		}
 		
 		func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -222,21 +239,25 @@ struct EnhancedWebView: UIViewRepresentable {
 			}
 			
 			// Function to receive fields data from Swift
-			function receiveFieldsData(jsonString) {
+			function receiveFieldsData(fieldsJSON) {
 				try {
-					fieldsData = JSON.parse(jsonString);
+					// This function might still be called from Swift
+					fieldsData = fieldsJSON;
+					console.log("Received fields data, length:", fieldsData.length);
 					checkDataAndRender();
 				} catch (e) {
-					console.error("Error parsing fields data:", e);
+					console.error("Error processing fields data:", e);
 				}
 			}
 			
 			// Check if we have all data needed to render
-			function checkDataAndRender() {
-				if (banditoImageURL !== '' && fieldsData.length > 0) {
+			   function checkDataAndRender() {
+				console.log("Checking data, fields length:", fieldsData.length);
+				if (fieldsData.length > 0) {
+					// Don't wait for image, proceed with rendering
 					renderFieldsList();
 				}
-			}
+			   }
 			
 			function renderFieldsList() {
 				// Create styled container

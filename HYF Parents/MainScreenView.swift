@@ -39,9 +39,6 @@ struct MainScreenView: View {
 								.padding(.top, 70) // Ensure consistent top padding
 							
 							// Middle: Social links
-							/*
-							 <div>Icons made by <a href="https://www.flaticon.com/authors/pixel-perfect" title="Pixel perfect">Pixel perfect</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div><div>Icons made by <a href="https://www.flaticon.com/authors/redempticon" title="redempticon">redempticon</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
-							 */
 							VStack(spacing: 6) {
 								HStack(spacing: 20) {
 									socialButton(image: "icon_Facebook", url: "https://www.facebook.com/Huntley-Red-Raiders-Youth-Football-League-112134028046472", label: "Facebook")
@@ -74,11 +71,9 @@ struct MainScreenView: View {
 										
 										// Field Maps button - Modified to display Box 5 within the app
 										Button(action: {
-											webViewTitle = "Field Locations"
-											webViewURL = URL(string: "https://www.tcyfl.net/maps.php")
-											showingWebView = true
+											showFieldMaps = true
 										}) {
-											mainButtonView(image: "icon_Maps", label: "Field  Locations", bg: Color.white.opacity(1.0), fg: .black)
+											mainButtonView(image: "icon_Maps", label: "Field\nLocations", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										
 										/*
@@ -138,17 +133,23 @@ struct MainScreenView: View {
 				webViewSheet(title: "Important Dates", url: URL(string: "https://www.huntleyyouthfootball.org/page/show/6967331-important-dates")!)
 			}
 			// In your MainScreenView.swift file, modify the .sheet for showFieldMaps:
-			/*
+			
 			.sheet(isPresented: $showFieldMaps) {
-				NavigationView {
-					EnhancedWebView(url: URL(string: "https://www.tcyfl.net/maps.php")!, divToShow: "")
-						.navigationBarTitle("Field Locations", displayMode: .inline)
-						.navigationBarItems(trailing: Button("Done") {
-							showFieldMaps = false
-						})
+				NavigationStack {
+					FieldLocationsView()
+						.navigationTitle("Field Locations")
+						.navigationBarTitleDisplayMode(.inline)
+						.toolbar {
+							ToolbarItem(placement: .topBarTrailing) {
+								Button("Done") {
+									showFieldMaps = false
+								}
+							}
+						}
 				}
+				.accentColor(.red)
 			}
-			 */
+			 
 			.sheet(isPresented: $showRegistration) {
 				webViewSheet(title: "Registration", url: URL(string: "https://www.huntleyyouthfootball.org/page/show/6967329-registration")!)
 			}
@@ -163,7 +164,22 @@ struct MainScreenView: View {
 			}
 			// Add this sheet for webViewURL
 			.sheet(isPresented: $showingWebView) {
-				if let url = webViewURL {
+				if webViewTitle == "Field Locations" {
+					// Use a standard NavigationStack instead of NavigationView
+					NavigationStack {
+						FieldLocationsView()
+							.navigationTitle("Field Locations")
+							.navigationBarTitleDisplayMode(.inline)
+							.toolbar {
+								ToolbarItem(placement: .topBarTrailing) {
+									Button("Done") {
+										showingWebView = false
+									}
+								}
+							}
+					}
+					.accentColor(.red)
+				} else if let url = webViewURL {
 					webViewSheet(title: webViewTitle, url: url)
 				}
 			}
@@ -172,37 +188,27 @@ struct MainScreenView: View {
 	}
 	
 	// MARK: - Helper to create WebView sheet
-	// MARK: - Helper to create WebView sheet
 	private func webViewSheet(title: String, url: URL) -> some View {
 		NavigationView {
-			if title == "Field Locations" {
-				EnhancedWebView(url: url, divToShow: "")
-					.navigationBarTitle(title, displayMode: .inline)
-					.navigationBarItems(trailing: Button("Done") {
-						showingWebView = false
-					})
-					.preferredColorScheme(.dark)
-			} else {
-				WebView(url: url)
-					.navigationBarTitle(title, displayMode: .inline)
-					.navigationBarItems(trailing: Button("Done") {
-						// Close the appropriate sheet based on title
-						switch title {
-							case "Important Dates":
-								showImportantDates = false
-							case "Registration":
-								showRegistration = false
-							case "Spirit Store":
-								showSpiritStore = false
-							case "TCYFL":
-								showTCYFL = false
-							case "Coaches Corner":
-								showCoachesCorner = false
-							default:
-								showingWebView = false
-						}
-					})
-			}
+			WebView(url: url)
+				.navigationBarTitle(title, displayMode: .inline)
+				.navigationBarItems(trailing: Button("Done") {
+					// Close the appropriate sheet based on title
+					switch title {
+						case "Important Dates":
+							showImportantDates = false
+						case "Registration":
+							showRegistration = false
+						case "Spirit Store":
+							showSpiritStore = false
+						case "TCYFL":
+							showTCYFL = false
+						case "Coaches Corner":
+							showCoachesCorner = false
+						default:
+							showingWebView = false
+					}
+				})
 		}
 		.accentColor(.red)
 	}
