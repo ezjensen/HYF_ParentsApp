@@ -75,54 +75,59 @@ struct TackleView: View {
 											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
-											// BIG 10 Divisions
-											Button("BIG 10 - Varsity") {
+											// Varsity Divisions
+											Button("Vasity - BIG 10") {
 												webViewTitle = "Varsity Schedule"
 												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=varsity")
 												showingWebView = true
 											}
-											Button("BIG 10 - JV") {
+											// JV Divisions
+											Button("JV - BIG 10") {
 												webViewTitle = "JV Schedule"
 												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=jv")
 												showingWebView = true
 											}
-											Button("BIG 10 - Lightweight") {
+											// Lightweight Divisions
+											Button("Lightweight - BIG 10") {
 												webViewTitle = "Lightweight Schedule"
 												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=lightweight")
 												showingWebView = true
 											}
-											Button("BIG 10 - Middleweight") {
+											// Middleweight Divisions
+											Button("Middleweight - BIG 10") {
 												webViewTitle = "Middleweight Schedule"
 												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=middleweight")
 												showingWebView = true
 											}
-											Button("BIG 10 - Feather") {
-												webViewTitle = "Feather Schedule"
-												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=feather")
-												showingWebView = true
-											}
-											Button("BIG 10 - Bantam") {
-												webViewTitle = "Bantam Schedule"
-												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=bantam")
-												showingWebView = true
-											}
-											// PAC Divisions
-											Button("PAC - Middleweight") {
+											Button("Middleweight - PAC") {
 												webViewTitle = "Middleweight Schedule"
 												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=pac10&division=middleweight")
 												showingWebView = true
 											}
-											Button("PAC - Featherweight") {
+											// Featherweight Divisions
+											Button("Featherweight - BIG 10") {
+												webViewTitle = "Feather Schedule"
+												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=feather")
+												showingWebView = true
+											}
+											Button("Featherweight - PAC") {
 												webViewTitle = "Featherweight Schedule"
 												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=pac10&division=featherweight")
 												showingWebView = true
 											}
-											Button("PAC - Bantam") {
+											// Bantam Divisions
+											Button("Bantam - BIG 10") {
+												webViewTitle = "Bantam Schedule"
+												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=bantam")
+												showingWebView = true
+											}
+											Button("Bantam - PAC") {
 												webViewTitle = "Bantam Schedule"
 												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=pac10&division=bantam")
 												showingWebView = true
 											}
-											Button("PAC - Flyweight") {
+											// Flyweight Divisions
+											Button("Flyweight - PAC") {
 												webViewTitle = "Flyweight Schedule"
 												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=pac10&division=flyweight")
 												showingWebView = true
