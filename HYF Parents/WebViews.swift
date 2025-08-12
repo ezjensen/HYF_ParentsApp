@@ -143,7 +143,7 @@ struct EnhancedWebView: UIViewRepresentable {
 		
 		private func loadFields() {
 			let fieldService = FieldService()
-			fieldService.fetchFields()
+			fieldService.loadFields()
 			self.fields = fieldService.fields
 			print("Successfully loaded \(fieldService.fields.count) fields from static data")
 		}
@@ -191,7 +191,7 @@ struct EnhancedWebView: UIViewRepresentable {
 		private func sendHardcodedFields(to webView: WKWebView) {
 			// Create a field service instance to access the fields
 			let fieldService = FieldService()
-			fieldService.fetchFields()
+			fieldService.loadFields()
 			
 			do {
 				let encoder = JSONEncoder()
