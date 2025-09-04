@@ -21,8 +21,8 @@ struct GirlsFlagView: View {
 
 	private let scheduleURLs = [
 		//"K-3": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=K3",
-		"3-5th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=4-5th",
-		"6-8th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=6-8th"
+		"3-5th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=4-5th",
+		"6-8th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=6-8th"
 	]
 	@Binding var selectedTab: Int
 	
@@ -81,7 +81,7 @@ struct GirlsFlagView: View {
 										Button(action: {
 											showingCalendarActionSheet = true
 										}) {
-											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
+											mainButtonView(image: "icon_Calendar", label: "Girl's Flag Schedules", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
 											/* Level is not active for 2025 Season

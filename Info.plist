@@ -23,13 +23,21 @@
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>glazierdrive</string>
+		<string>Glazier Drive</string>
+		<string>glazierdrive.app</string>
 		<string>glazier</string>
-		<string>com.hudl.glazier</string>
+		<string>glazier.app</string>
+		<string>Glazier Drive.app</string>
 		<string>com.glazierdrive.app</string>
 		<string>playmakerx</string>
+		<string>playmakerx.app</string>
 		<string>playmaker</string>
-		<string>com.playmakercoach.x</string>
+		<string>playmaker.app</string>
+		<string>playmaker x</string>
+		<string>playmaker x.app</string>
 		<string>com.playmakerx.app</string>
+		<string>Tackle Football Playmaker X</string>
+		<string>Tackle Football Playmaker X.app</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

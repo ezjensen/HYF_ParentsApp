@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Supabase
 
 // MARK: - Main Screen with Background, Logo, and Overlay
 struct MainScreenView: View {
@@ -182,6 +183,11 @@ struct MainScreenView: View {
 				} else if let url = webViewURL {
 					webViewSheet(title: webViewTitle, url: url)
 				}
+			}
+			// MARK: - Connect to Supabase for fetching data
+			.onAppear {
+				// Initialize Supabase connection when MainScreenView appears
+				let _ = supabase // This ensures the Supabase client is initialized
 			}
 		}
 		.navigationViewStyle(StackNavigationViewStyle()) // Ensure consistent navigation style

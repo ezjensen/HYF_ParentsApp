@@ -6,11 +6,61 @@
 //
 
 import SwiftUI
+import MapKit
+
+// Define IdentifiablePlace at the top level
+struct IdentifiablePlace: Identifiable {
+	let id: String
+	let coordinate: CLLocationCoordinate2D
+}
 
 struct FieldLocationsView: View {
 	@StateObject private var fieldService = FieldService()
 	@State private var searchText = ""
-	@State private var selectedField: Field? = nil
+	@State private var selectedField: Field?
+	
+	var body: some View {
+		VStack {
+			// Search box with conditional red border
+			TextField("Search fields...", text: $searchText)
+				.padding()
+				.background(.ultraThinMaterial)
+				.cornerRadius(8)
+				.padding(.horizontal)
+				.foregroundColor(fieldService.isDataFromSupabase ? nil : .red)
+			
+			if fieldService.isLoading {
+				Spacer()
+				ProgressView("Loading fields...")
+				Spacer()
+			} else {
+				List(filteredFields) { field in
+					Button {
+						selectedField = field
+					} label: {
+						FieldRowView(field: field)
+					}
+					.buttonStyle(PlainButtonStyle())
+				}
+			}
+		}
+		.onAppear {
+			// Call loadFields when the view appears if fields are empty
+			if fieldService.fields.isEmpty {
+				fieldService.loadFields()
+			}
+		}
+		.sheet(item: $selectedField) { field in
+			NavigationStack {
+				FieldDetailView(field: field)
+					.navigationBarItems(trailing: Button("Done") {
+						selectedField = nil
+					})
+					.navigationBarTitle("Field Details", displayMode: .inline)
+			}
+			.accentColor(.red)
+		}
+	}
 	
 	var filteredFields: [Field] {
 		if searchText.isEmpty {
@@ -22,213 +72,170 @@ struct FieldLocationsView: View {
 			}
 		}
 	}
-	
-	var body: some View {
-		ZStack {
-			// Background
-			Color.black.ignoresSafeArea()
-			
-			// Content
-			VStack(spacing: 0) {
-				// Search field
-				HStack {
-					Image(systemName: "magnifyingglass")
-						.foregroundColor(.gray)
-					TextField("Search fields...", text: $searchText)
-						.foregroundColor(.white)
-					
-					if !searchText.isEmpty {
-						Button(action: {
-							searchText = ""
-						}) {
-							Image(systemName: "xmark.circle.fill")
-								.foregroundColor(.gray)
-						}
-					}
-				}
-				.padding()
-				.background(Color(UIColor.darkGray).opacity(0.3))
-				.cornerRadius(10)
-				.padding()
-				
-				// Field list
-				if fieldService.isLoading {
-					Spacer()
-					ProgressView()
-						.progressViewStyle(CircularProgressViewStyle(tint: .white))
-						.scaleEffect(1.5)
-					Spacer()
-				} else if filteredFields.isEmpty {
-					Spacer()
-					Text("No fields matching '\(searchText)'")
-						.foregroundColor(.gray)
-						.padding()
-					Spacer()
-				} else {
-					ScrollView {
-						LazyVStack(spacing: 16) {
-							ForEach(filteredFields) { field in
-								FieldRowView(field: field)
-									.onTapGesture {
-										selectedField = field
-									}
-							}
-						}
-						.padding(.horizontal)
-						.padding(.vertical, 8)
-					}
-				}
-			}
-		}
-		.onAppear {
-			fieldService.fetchFields()
-		}
-		.sheet(item: $selectedField) { field in
-			FieldDetailView(field: field)
-		}
-	}
 }
 
+// MARK: - FieldRowView
 struct FieldRowView: View {
 	let field: Field
 	
 	var body: some View {
-		HStack {
-			VStack(alignment: .leading, spacing: 6) {
-				Text(field.name)
-					.font(.headline)
-					.foregroundColor(.white)
-				
-				Text(field.address)
-					.font(.subheadline)
-					.foregroundColor(.gray)
-					.lineLimit(1)
-			}
+		VStack(alignment: .leading, spacing: 4) {
+			Text(field.name)
+				.font(.headline)
 			
-			Spacer()
-			
-			if field.is_home_field {
-				Image("HYF_Bandito")
-					.resizable()
-					.scaledToFit()
-					.frame(width: 40, height: 40)
-			}
+			Text(field.address)
+				.font(.subheadline)
+				.foregroundColor(.gray)
 		}
-		.padding()
-		.background(Color(UIColor.darkGray).opacity(0.3))
-		.cornerRadius(10)
+		.padding(.vertical, 4)
 	}
 }
 
+// MARK: - FieldDetailView
 struct FieldDetailView: View {
 	let field: Field
-	@Environment(\.dismiss) private var dismiss
+	@State private var position: MapCameraPosition = .automatic
+	@State private var locationAnnotation: IdentifiablePlace?
+	@State private var isLoadingLocation = true
+	@State private var geocodingError = false
+	@State private var viewId = UUID()
 	
 	var body: some View {
-		NavigationStack {
+		VStack {
 			ZStack {
-				Color.black.ignoresSafeArea()
+				// Using the new Map initializer syntax for iOS 17+
+				if #available(iOS 17.0, *) {
+					Map(position: $position) {
+						if let location = locationAnnotation {
+							Marker(field.name, coordinate: location.coordinate)
+						}
+					}
+					.id(viewId)
+					.frame(height: 300)
+				} else {
+					// Fallback for iOS 16 and earlier
+					if let location = locationAnnotation {
+						Map(coordinateRegion: .constant(MKCoordinateRegion(
+							center: location.coordinate,
+							span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+						)))
+						.id(viewId)
+						.frame(height: 300)
+					} else {
+						Color.gray.opacity(0.2)
+							.frame(height: 300)
+					}
+				}
 				
-				ScrollView {
-					VStack(alignment: .leading, spacing: 20) {
-						if field.is_home_field {
-							HStack {
-								Spacer()
-								Image("HYF_Bandito")
-									.resizable()
-									.scaledToFit()
-									.frame(height: 120)
-								Spacer()
-							}
-							.padding(.top, 20)
-						}
-						
-						Text(field.name)
-							.font(.largeTitle)
-							.fontWeight(.bold)
-							.foregroundColor(.white)
-						
-						Button(action: {
-							openInMaps(address: field.address)
-						}) {
-							VStack(alignment: .leading) {
-								Text("Address:")
-									.font(.headline)
-									.foregroundColor(.gray)
-								
-								HStack {
-									Text(field.address)
-										.font(.title3)
-										.foregroundColor(.white)
-									
-									Spacer()
-									
-									Image(systemName: "map.fill") // Changed from arrow.up.right.square to map.fill
-										.foregroundColor(.red)
-								}
-							}
-							.padding()
-							.background(Color(UIColor.darkGray).opacity(0.3))
-							.cornerRadius(10)
-						}
-						
-						if let notes = field.notes, !notes.isEmpty {
-							VStack(alignment: .leading) {
-								Text("Notes:")
-									.font(.headline)
-									.foregroundColor(.gray)
-								
-								Text(notes)
-									.foregroundColor(.white)
-									.fixedSize(horizontal: false, vertical: true) // Allow vertical growth
-									.lineLimit(nil) // Allow multiple lines
-									.multilineTextAlignment(.leading) // Align text to the left
-							}
-							.padding()
-							.frame(maxWidth: .infinity, alignment: .leading) // Full width container
-							.background(Color(UIColor.darkGray).opacity(0.3))
-							.cornerRadius(10)
-						}
-						
-						if field.is_home_field {
-							HStack {
-								Spacer()
-								Text("HOME FIELD")
-									.font(.headline)
-									.foregroundColor(.red)
-									.padding(.horizontal, 16)
-									.padding(.vertical, 8)
-									.overlay(
-										RoundedRectangle(cornerRadius: 8)
-											.stroke(Color.red, lineWidth: 2)
-									)
-								Spacer()
-							}
-							.padding(.top, 10)
-						}
-						
-						Spacer()
-					}
-					.padding()
+				if isLoadingLocation {
+					Color.black.opacity(0.1)
+					ProgressView()
+				}
+				
+				if geocodingError {
+					Text("Could not find location on map")
+						.padding()
+						.background(Color.black.opacity(0.7))
+						.foregroundColor(.white)
+						.cornerRadius(8)
 				}
 			}
-			.navigationTitle("Field Details")
-			.navigationBarTitleDisplayMode(.inline)
-			.toolbar {
-				ToolbarItem(placement: .topBarTrailing) {
-					Button("Done") {
-						dismiss()
-					}
+			
+			VStack(alignment: .leading, spacing: 12) {
+				Text(field.name)
+					.font(.title)
+					.fontWeight(.bold)
+				
+				Text(field.address)
+					.font(.body)
+				
+				Divider()
+				
+				if let notes = field.notes, !notes.isEmpty {
+					Text("Notes:")
+						.font(.headline)
+					
+					Text(notes)
+						.font(.body)
 				}
+				
+				Spacer()
+				
+				Button(action: {
+					openInMaps()
+				}) {
+					Label("Directions", systemImage: "map")
+						.frame(maxWidth: .infinity)
+				}
+				.buttonStyle(.borderedProminent)
+				.tint(.red)
+				.disabled(locationAnnotation == nil)
 			}
+			.padding()
 		}
-		.accentColor(.red)
+		.onAppear {
+			// Manually start geocoding when view appears
+			geocodeAddress()
+		}
 	}
 	
-	private func openInMaps(address: String) {
-		if let encodedAddress = address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-		   let url = URL(string: "https://maps.apple.com/?q=\(encodedAddress)") {
-			UIApplication.shared.open(url)
+	func geocodeAddress() {
+		// Reset state
+		isLoadingLocation = true
+		geocodingError = false
+		locationAnnotation = nil
+		viewId = UUID()
+		
+		print("Starting geocoding for: \(field.name) at \(field.address)")
+		
+		let geocoder = CLGeocoder()
+		geocoder.geocodeAddressString(field.address) { placemarks, error in
+			// Always update UI on main thread
+			DispatchQueue.main.async {
+				self.isLoadingLocation = false
+				
+				if let error = error {
+					print("Geocoding error for \(field.name): \(error.localizedDescription)")
+					self.geocodingError = true
+					return
+				}
+				
+				guard let location = placemarks?.first?.location else {
+					print("No location found for address: \(field.address)")
+					self.geocodingError = true
+					return
+				}
+				
+				let coordinate = location.coordinate
+				print("Successfully geocoded \(field.name): \(coordinate.latitude), \(coordinate.longitude)")
+				
+				// Create a unique annotation
+				self.locationAnnotation = IdentifiablePlace(
+					id: UUID().uuidString,
+					coordinate: coordinate
+				)
+				
+				// Update map position based on iOS version
+				if #available(iOS 17.0, *) {
+					self.position = .region(MKCoordinateRegion(
+						center: coordinate,
+						span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+					))
+				}
+				
+				// Force view update
+				self.viewId = UUID()
+			}
 		}
+	}
+	
+	func openInMaps() {
+		guard let locationAnnotation = locationAnnotation else { return }
+		
+		let coordinate = locationAnnotation.coordinate
+		let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
+		mapItem.name = field.name
+		
+		mapItem.openInMaps()
 	}
 }

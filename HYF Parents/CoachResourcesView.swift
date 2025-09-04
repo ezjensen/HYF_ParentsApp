@@ -75,7 +75,6 @@ struct CoachResourcesView: View {
 							VStack {
 								VStack {
 									LazyVGrid(columns: columns, spacing: 25) {
-										// TCYFL Passport button - Enhanced implementation
 										// TCYFL Passport button - Updated to open in default browser
 										Button(action: {
 											if let url = URL(string: "https://tcyfl.athleticpassports.com/login") {
@@ -92,20 +91,22 @@ struct CoachResourcesView: View {
 											mainButtonView(image: "icon_HYF_Safety", label: "Safety Resources", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										
-										// Glazier Drive button
+										// Glazier Drive button - Updated to use simpler approach
 										Button(action: {
-											checkAndOpenApp(
+											launchAppOrStore(
 												appName: "Glazier Drive",
+												appURLString: "hudl-glazier://", // Try this primary scheme
 												appStoreId: "id1530106966"
 											)
 										}) {
 											mainButtonView(image: "icon_GlazierDrive", label: "Glazier Drive", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										
-										// Playmaker X button
+										// Playmaker X button - Updated to use simpler approach
 										Button(action: {
-											checkAndOpenApp(
+											launchAppOrStore(
 												appName: "Playmaker X",
+												appURLString: "playmakerx://", // Try this primary scheme
 												appStoreId: "id1466963180"
 											)
 										}) {
@@ -222,8 +223,6 @@ struct CoachResourcesView: View {
 							
 							Text(resource.title)
 								.foregroundColor(.primary)
-							
-							// Remove this Spacer and Image to avoid double chevrons
 						}
 						.padding(.vertical, 4)
 					}
@@ -297,116 +296,36 @@ struct CoachResourcesView: View {
 		.buttonStyle(.plain)
 	}
 	
-	// MARK: - Check if app is installed, otherwise prompt to install
-	private func checkAndOpenApp(appName: String, appStoreId: String) {
-		// Direct deep links that might work for these specific apps
-		var appDeepLink: URL?
+	// MARK: - Simplified app launcher
+	private func launchAppOrStore(appName: String, appURLString: String, appStoreId: String) {
+		let appStoreURL = URL(string: "https://apps.apple.com/app/\(appStoreId)")!
 		
-		switch appName {
-			case "Glazier Drive":
-				// Try multiple potential deep links for Glazier Drive
-				let potentialLinks = ["glazier://", "glazierdrive://", "com.hudl.glazier://"]
-				for link in potentialLinks {
-					if let url = URL(string: link), UIApplication.shared.canOpenURL(url) {
-						appDeepLink = url
-						break
-					}
-				}
-			case "Playmaker X":
-				// Try multiple potential deep links for Playmaker X
-				let potentialLinks = ["playmakerx://", "playmaker://", "com.playmakercoach.x://"]
-				for link in potentialLinks {
-					if let url = URL(string: link), UIApplication.shared.canOpenURL(url) {
-						appDeepLink = url
-						break
-					}
-				}
-			default:
-				break
-		}
+		print("🚀 Attempting to launch \(appName)...")
 		
-		// If we found a working deep link, use it
-		if let deepLink = appDeepLink {
-			UIApplication.shared.open(deepLink, options: [:]) { success in
-				print("Opened \(appName) with deep link: \(success)")
-			}
-		} else {
-			// Otherwise go directly to App Store
-			if let appStoreURL = URL(string: "https://apps.apple.com/app/\(appStoreId)") {
-				UIApplication.shared.open(appStoreURL, options: [:]) { _ in
-					print("Opened App Store for \(appName)")
-				}
-			}
-		}
-	}
-	
-	private func openAppWithUniversalLink(appName: String, appStoreId: String) {
-		// First try Universal Links for these specific apps
-		var universalLinkString: String?
-		
-		if appName == "Glazier Drive" {
-			universalLinkString = "https://drive.glazier.io"
-		} else if appName == "Playmaker X" {
-			universalLinkString = "https://app.playmakerx.com"
-		}
-		
-		// Try to open with universal link if available
-		if let linkString = universalLinkString, let universalLink = URL(string: linkString) {
-			UIApplication.shared.open(universalLink, options: [:]) { success in
-				if !success {
-					// Fall back to App Store link if universal link fails
-					if let appStoreURL = URL(string: "https://apps.apple.com/app/\(appStoreId)") {
-						UIApplication.shared.open(appStoreURL, options: [:], completionHandler: nil)
+		// Try to launch the app directly without checking if it's installed
+		if let appURL = URL(string: appURLString) {
+			// Use UIApplication.shared.open with a completion handler
+			UIApplication.shared.open(appURL, options: [:]) { success in
+				if success {
+					print("✅ Successfully launched \(appName)")
+				} else {
+					print("❌ Could not launch \(appName), showing App Store prompt")
+					
+					// App couldn't be opened, show App Store prompt
+					DispatchQueue.main.async {
+						self.appToInstall = appName
+						self.appStoreURL = appStoreURL
+						self.showingAppStoreAlert = true
 					}
 				}
 			}
 		} else {
-			// Use App Store URL as fallback
-			if let appStoreURL = URL(string: "https://apps.apple.com/app/\(appStoreId)") {
-				UIApplication.shared.open(appStoreURL, options: [:], completionHandler: nil)
-			}
+			// Fallback to App Store prompt
+			print("⚠️ Invalid URL, showing App Store prompt")
+			appToInstall = appName
+			self.appStoreURL = appStoreURL
+			showingAppStoreAlert = true
 		}
-	}
-	
-	// Helper method to show App Store prompt
-	private func showAppStorePrompt(appName: String, appStoreId: String) {
-		appToInstall = appName
-		appStoreURL = URL(string: "https://apps.apple.com/app/\(appStoreId)")
-		showingAppStoreAlert = true
-	}
-	
-	private func tryOpenApp(appName: String, urlSchemes: [String], appStoreId: String) {
-		// Try a more direct approach with specific app identifiers
-		let appURLs: [String: String] = [
-			"Glazier Drive": "glazierdrive://login",
-			"Playmaker X": "playmakerx://home"
-		]
-		
-		// First try with the direct app URL if available
-		if let directURL = appURLs[appName],
-		   let url = URL(string: directURL) {
-			print("Trying direct URL: \(directURL)")
-			
-			// Check if we can open it
-			if UIApplication.shared.canOpenURL(url) {
-				print("✅ Direct URL can be opened")
-				UIApplication.shared.open(url, options: [:]) { success in
-					if !success {
-						print("❌ Direct URL open failed")
-						self.showAppStorePrompt(appName: appName, appStoreId: appStoreId)
-					} else {
-						print("✅ App opened successfully")
-					}
-				}
-				return
-			} else {
-				print("❌ Cannot open direct URL")
-			}
-		}
-		
-		// If no direct URL or it failed, try the app store
-		print("Showing App Store prompt for \(appName)")
-		showAppStorePrompt(appName: appName, appStoreId: appStoreId)
 	}
 }
 

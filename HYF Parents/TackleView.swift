@@ -72,7 +72,7 @@ struct TackleView: View {
 										Button(action: {
 											showingCalendarActionSheet = true
 										}) {
-											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
+											mainButtonView(image: "icon_Calendar", label: "Tackle Schedules", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
 											// Varsity Divisions

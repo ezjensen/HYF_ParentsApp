@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import Supabase
 
 // Model for Football Fields
 struct Field: Identifiable, Codable {
@@ -19,55 +20,75 @@ struct Field: Identifiable, Codable {
 }
 
 // Service to fetch fields from Supabase
+
+// First, let's fix the FieldService to properly handle the server response
 class FieldService: ObservableObject {
 	@Published var fields: [Field] = []
-	@Published var isLoading: Bool = true  // Start with loading true
+	@Published var isLoading = true
+	@Published var isDataFromSupabase = false
 	
-	init() {
-		print("FieldService initialized")
-		fields = FieldLocationsData.fields
-		isLoading = false
-	}
-	
-	func fetchFields() {
-		print("FieldService: Fetching fields")
+	func loadFields() {
 		isLoading = true
 		
-		// Simulate network request with a short delay
-		DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-			self.fields = FieldLocationsData.fields
-			self.isLoading = false
-			print("FieldService: Loaded \(self.fields.count) fields")
+		// Set a timeout to use fallback data if Supabase is slow
+		DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+			if self?.isLoading == true {
+				self?.isLoading = false
+				self?.isDataFromSupabase = false
+				self?.fields = FieldLocationsData.fields
+			}
+		}
+		
+		// Fetch data from Supabase
+		Task { @MainActor [weak self] in
+			guard let self = self else { return }
+			
+			do {
+				let response: PostgrestResponse = try await supabase
+					.from("FootballFields")
+					.select()
+					.execute()
+				
+				let data = response.data
+				
+				// Print the raw JSON for debugging
+				if let jsonString = String(data: data, encoding: .utf8) {
+					print("Raw JSON from Supabase: \(jsonString)")
+				}
+				
+				do {
+					let decoder = JSONDecoder()
+					// Try to decode with custom keys if necessary
+					let fields = try decoder.decode([Field].self, from: data)
+					
+					print("FieldService: Loaded \(fields.count) fields from Supabase")
+					self.isLoading = false
+					
+					if fields.isEmpty {
+						self.fields = FieldLocationsData.fields
+						self.isDataFromSupabase = false
+					} else {
+						self.fields = fields
+						self.isDataFromSupabase = true
+					}
+				} catch {
+					print("FieldService: Error decoding fields: \(error)")
+					self.isLoading = false
+					self.isDataFromSupabase = false
+					self.fields = FieldLocationsData.fields
+				}
+			} catch {
+				print("FieldService: Error fetching fields from Supabase: \(error)")
+				self.isLoading = false
+				self.isDataFromSupabase = false
+				self.fields = FieldLocationsData.fields
+			}
 		}
 	}
+}
+
 	
-	// Supabase integration will be added in a future release
-	/*
-	 // Replace with your actual Supabase URL and API key
-	 let client = SupabaseClient(
-	 supabaseURL: URL(string: "https://dnnkzeghqckuqinlamps.supabase.co")!,
-	 supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRubmt6ZWdocWNrdXFpbmxhbXBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1Nzk4NTcsImV4cCI6MjA3MDE1NTg1N30.upNLACkKXkwZ4nfubPpBEI0YiTWxUCbQ-0rW--pAbrE")
-	 var request = URLRequest(url: supabaseURL)
-	 request.httpMethod = "GET"
-	 request.addValue("your-api-key", forHTTPHeaderField: "apikey")
-	 request.addValue("Bearer your-api-key", forHTTPHeaderField: "Authorization")
-	 
-	 URLSession.shared.dataTaskPublisher(for: request)
-	 .map(\.data)
-	 .decode(type: [Field].self, decoder: JSONDecoder())
-	 .receive(on: DispatchQueue.main)
-	 .sink(receiveCompletion: { completion in
-	 self.isLoading = false
-	 if case .failure(let error) = completion {
-	 self.error = error.localizedDescription
-	 }
-	 }, receiveValue: { fields in
-	 self.fields = fields
-	 })
-	 .store(in: &cancellables)
-	 */
-	
-	
+	// MARK: - Static data for fallback
 	// Static field data for fallback
 	struct FieldLocationsData {
 		static let fields: [Field] = [
@@ -186,4 +207,4 @@ class FieldService: ObservableObject {
 			}
 		}
 	}
-}
+
