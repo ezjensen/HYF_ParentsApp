@@ -6,6 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		07C6A4CF2E4A986500F4F273 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 07C6A4CE2E4A986500F4F273 /* Functions */; };
+		07C6A4D12E4A986500F4F273 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 07C6A4D02E4A986500F4F273 /* PostgREST */; };
+		07C6A4D32E4A986500F4F273 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 07C6A4D22E4A986500F4F273 /* Realtime */; };
+		07C6A4D52E4A986500F4F273 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 07C6A4D42E4A986500F4F273 /* Storage */; };
+		07C6A4D72E4A986500F4F273 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 07C6A4D62E4A986500F4F273 /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		077BAAB82E3013E200E90DEF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		077BAADA2E30286F00E90DEF /* HYF Parents.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "HYF Parents.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -24,6 +32,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				07C6A4D72E4A986500F4F273 /* Supabase in Frameworks */,
+				07C6A4D52E4A986500F4F273 /* Storage in Frameworks */,
+				07C6A4D32E4A986500F4F273 /* Realtime in Frameworks */,
+				07C6A4D12E4A986500F4F273 /* PostgREST in Frameworks */,
+				07C6A4CF2E4A986500F4F273 /* Functions in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,6 +72,11 @@
 			);
 			name = "HYF Parents";
 			packageProductDependencies = (
+				07C6A4CE2E4A986500F4F273 /* Functions */,
+				07C6A4D02E4A986500F4F273 /* PostgREST */,
+				07C6A4D22E4A986500F4F273 /* Realtime */,
+				07C6A4D42E4A986500F4F273 /* Storage */,
+				07C6A4D62E4A986500F4F273 /* Supabase */,
 			);
 			productName = "HYF Parents";
 			productReference = 077BAADA2E30286F00E90DEF /* HYF Parents.app */;
@@ -88,6 +106,9 @@
 			);
 			mainGroup = 07DA85362E0612A5000DEEE8;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				07C6A4CD2E4A986500F4F273 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 07DA85362E0612A5000DEEE8;
 			projectDirPath = "";
@@ -346,6 +367,45 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		07C6A4CD2E4A986500F4F273 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		07C6A4CE2E4A986500F4F273 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 07C6A4CD2E4A986500F4F273 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		07C6A4D02E4A986500F4F273 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 07C6A4CD2E4A986500F4F273 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		07C6A4D22E4A986500F4F273 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 07C6A4CD2E4A986500F4F273 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		07C6A4D42E4A986500F4F273 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 07C6A4CD2E4A986500F4F273 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		07C6A4D62E4A986500F4F273 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 07C6A4CD2E4A986500F4F273 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 07DA85372E0612A5000DEEE8 /* Project object */;
 }
