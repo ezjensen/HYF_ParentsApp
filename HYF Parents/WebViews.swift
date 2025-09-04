@@ -172,9 +172,16 @@ struct EnhancedWebView: UIViewRepresentable {
 							let encoder = JSONEncoder()
 							let fieldsData = try encoder.encode(fields)
 							if let fieldsJson = String(data: fieldsData, encoding: .utf8) {
-								// Send fields data to JavaScript
+								// Send fields data to JavaScript, escape single quotes
 								let script = "receiveFieldsData('\(fieldsJson.replacingOccurrences(of: "'", with: "\\'"))');"
-								webView.evaluateJavaScript(script)
+								webView.evaluateJavaScript(script) { result, error in
+									if let error = error {
+										print("Error sending fields data: \(error)")
+										self.sendHardcodedFields(to: webView)
+									} else {
+										print("Fields data sent successfully")
+									}
+								}
 							}
 						} catch {
 							print("Error encoding fields: \(error.localizedDescription)")
@@ -189,29 +196,29 @@ struct EnhancedWebView: UIViewRepresentable {
 		}
 		
 		private func sendHardcodedFields(to webView: WKWebView) {
-			// Create a field service instance to access the fields
-			let fieldService = FieldService()
-			fieldService.loadFields()
+			// Use the static fallback data for fields
+			let fieldsJSON = FieldLocationsData.fieldsJSON
 			
-			do {
-				let encoder = JSONEncoder()
-				encoder.outputFormatting = .prettyPrinted
-				let data = try encoder.encode(fieldService.fields)
-				
-				if let jsonString = String(data: data, encoding: .utf8) {
-					print("Sending \(fieldService.fields.count) fields to WebView")
-					let script = "fieldsData = \(jsonString); checkDataAndRender();"
+			// Escape single quotes to prevent JavaScript errors
+			let escapedJSON = fieldsJSON.replacingOccurrences(of: "'", with: "\\'")
+			
+			let script = "receiveFieldsData('\(escapedJSON)');"
+			webView.evaluateJavaScript(script) { result, error in
+				if let error = error {
+					print("Error sending hardcoded fields data: \(error)")
 					
-					webView.evaluateJavaScript(script) { result, error in
+					// Alternative approach if the first fails
+					let directScript = "fieldsData = \(fieldsJSON); checkDataAndRender();"
+					webView.evaluateJavaScript(directScript) { result, error in
 						if let error = error {
-							print("Error sending fields data: \(error)")
+							print("Error with direct field data assignment: \(error)")
 						} else {
-							print("Fields data sent successfully")
+							print("Direct fields data assignment successful")
 						}
 					}
+				} else {
+					print("Hardcoded fields data sent successfully")
 				}
-			} catch {
-				print("Failed to encode fields: \(error)")
 			}
 		}
 		
@@ -222,7 +229,7 @@ struct EnhancedWebView: UIViewRepresentable {
 			} else if parent.url.absoluteString.contains("TabbedGameSchedulesNEW.php") {
 				applyScheduleJavaScript(webView)
 			} else {
-				applyDarkModeJavaScript(webView)
+				applyHuntleyFilterJavaScript(webView)
 			}
 		}
 		
@@ -241,8 +248,7 @@ struct EnhancedWebView: UIViewRepresentable {
 			// Function to receive fields data from Swift
 			function receiveFieldsData(fieldsJSON) {
 				try {
-					// This function might still be called from Swift
-					fieldsData = fieldsJSON;
+					fieldsData = JSON.parse(fieldsJSON);
 					console.log("Received fields data, length:", fieldsData.length);
 					checkDataAndRender();
 				} catch (e) {
@@ -251,13 +257,12 @@ struct EnhancedWebView: UIViewRepresentable {
 			}
 			
 			// Check if we have all data needed to render
-			   function checkDataAndRender() {
+			function checkDataAndRender() {
 				console.log("Checking data, fields length:", fieldsData.length);
 				if (fieldsData.length > 0) {
-					// Don't wait for image, proceed with rendering
 					renderFieldsList();
 				}
-			   }
+			}
 			
 			function renderFieldsList() {
 				// Create styled container
@@ -270,17 +275,62 @@ struct EnhancedWebView: UIViewRepresentable {
 				container.style.backgroundColor = '#121212';
 				container.style.minHeight = '100vh';
 				
+				// Add header
+				var header = document.createElement('h1');
+				header.textContent = 'Field Locations';
+				header.style.color = 'white';
+				header.style.textAlign = 'center';
+				header.style.marginBottom = '20px';
+				header.style.fontSize = '36px';
+				header.style.fontWeight = 'bold';
+				container.appendChild(header);
+				
+				// Add search input
+				var searchContainer = document.createElement('div');
+				searchContainer.style.marginBottom = '20px';
+				searchContainer.style.position = 'sticky';
+				searchContainer.style.top = '0';
+				searchContainer.style.zIndex = '10';
+				searchContainer.style.backgroundColor = '#121212';
+				searchContainer.style.padding = '10px 0';
+				
+				var searchInput = document.createElement('input');
+				searchInput.type = 'text';
+				searchInput.placeholder = 'Search fields...';
+				searchInput.style.width = '100%';
+				searchInput.style.padding = '15px';
+				searchInput.style.fontSize = '20px';
+				searchInput.style.borderRadius = '10px';
+				searchInput.style.border = '1px solid #444';
+				searchInput.style.backgroundColor = '#1e1e1e';
+				searchInput.style.color = 'white';
+				searchContainer.appendChild(searchInput);
+				container.appendChild(searchContainer);
 				
 				// Create a card for each field
 				var fieldsList = document.createElement('div');
-				fieldsData.forEach(function(field) {
+				fieldsList.id = 'fields-list';
+				
+				// Sort fields by name
+				fieldsData.sort((a, b) => a.name.localeCompare(b.name));
+				
+				// Home fields first
+				let homeFields = fieldsData.filter(f => f.is_home_field);
+				let awayFields = fieldsData.filter(f => !f.is_home_field);
+				let sortedFields = [...homeFields, ...awayFields];
+				
+				sortedFields.forEach(function(field) {
 					var fieldCard = document.createElement('div');
-					fieldCard.style.backgroundColor = '#1e1e1e';
+					fieldCard.className = 'field-card';
+					fieldCard.setAttribute('data-name', field.name.toLowerCase());
+					fieldCard.setAttribute('data-address', field.address.toLowerCase());
+					fieldCard.style.backgroundColor = field.is_home_field ? '#3c1212' : '#1e1e1e';
 					fieldCard.style.padding = '22px';
 					fieldCard.style.marginBottom = '18px';
 					fieldCard.style.borderRadius = '12px';
 					fieldCard.style.cursor = 'pointer';
 					fieldCard.style.position = 'relative';
+					fieldCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
 					
 					// Add Bandito image for home fields
 					if (field.is_home_field) {
@@ -292,6 +342,21 @@ struct EnhancedWebView: UIViewRepresentable {
 						banditoIcon.style.right = '20px';
 						banditoIcon.style.top = '22px';
 						fieldCard.appendChild(banditoIcon);
+						
+						// Add a "HOME" label
+						var homeLabel = document.createElement('div');
+						homeLabel.textContent = 'HOME';
+						homeLabel.style.position = 'absolute';
+						homeLabel.style.top = '15px';
+						homeLabel.style.right = '20px';
+						homeLabel.style.backgroundColor = '#e63946';
+						homeLabel.style.color = 'white';
+						homeLabel.style.padding = '5px 10px';
+						homeLabel.style.borderRadius = '5px';
+						homeLabel.style.fontSize = '14px';
+						homeLabel.style.fontWeight = 'bold';
+						homeLabel.style.letterSpacing = '1px';
+						fieldCard.appendChild(homeLabel);
 					}
 					
 					// Field name (tappable)
@@ -299,7 +364,7 @@ struct EnhancedWebView: UIViewRepresentable {
 					fieldName.textContent = field.name;
 					fieldName.style.color = 'white';
 					fieldName.style.marginBottom = '12px';
-					fieldName.style.fontSize = '34px';
+					fieldName.style.fontSize = '32px';
 					fieldName.style.fontWeight = 'bold';
 					// Adjust padding for home fields to make room for icon
 					if (field.is_home_field) {
@@ -311,9 +376,28 @@ struct EnhancedWebView: UIViewRepresentable {
 					var fieldAddress = document.createElement('p');
 					fieldAddress.textContent = field.address;
 					fieldAddress.style.color = '#dddddd';
-					fieldAddress.style.fontSize = '24px';
+					fieldAddress.style.fontSize = '22px';
 					fieldAddress.style.lineHeight = '1.4';
 					fieldCard.appendChild(fieldAddress);
+					
+					// Add notes if available
+					if (field.notes) {
+						var notesLabel = document.createElement('div');
+						notesLabel.textContent = 'Notes:';
+						notesLabel.style.color = '#aaa';
+						notesLabel.style.marginTop = '12px';
+						notesLabel.style.fontSize = '18px';
+						notesLabel.style.fontWeight = 'bold';
+						fieldCard.appendChild(notesLabel);
+						
+						var fieldNotes = document.createElement('p');
+						fieldNotes.textContent = field.notes;
+						fieldNotes.style.color = '#bbbbbb';
+						fieldNotes.style.fontSize = '20px';
+						fieldNotes.style.lineHeight = '1.4';
+						fieldNotes.style.marginTop = '6px';
+						fieldCard.appendChild(fieldNotes);
+					}
 					
 					// Make the entire card tappable to open Google Maps
 					fieldCard.onclick = function() {
@@ -340,14 +424,32 @@ struct EnhancedWebView: UIViewRepresentable {
 					
 					@media (max-width: 375px) {
 						h1 { font-size: 32px; }
-						h2 { font-size: 30px; }
-						p { font-size: 22px; }
+						h2 { font-size: 28px; }
+						p { font-size: 20px; }
+						input { font-size: 18px; padding: 12px; }
 					}
 				`;
 				document.head.appendChild(style);
 				
 				// Replace page content with our list
 				document.body.appendChild(container);
+				
+				// Add search functionality
+				searchInput.addEventListener('input', function() {
+					const searchText = this.value.toLowerCase();
+					const cards = document.querySelectorAll('.field-card');
+					
+					cards.forEach(card => {
+						const name = card.getAttribute('data-name');
+						const address = card.getAttribute('data-address');
+						
+						if (name.includes(searchText) || address.includes(searchText)) {
+							card.style.display = 'block';
+						} else {
+							card.style.display = 'none';
+						}
+					});
+				});
 			}
 			
 			// Request data from Swift
@@ -364,248 +466,591 @@ struct EnhancedWebView: UIViewRepresentable {
 			}
 		}
 		
-		private func applyDarkModeJavaScript(_ webView: WKWebView) {
-			let javascript = """
-			// Apply dark mode to generic TCYFL pages
-			document.body.style.backgroundColor = '#121212';
-			document.body.style.color = '#ffffff';
-			
-			// Add global styles for dark mode
-			var style = document.createElement('style');
-			style.textContent = `
-				body {
-					background-color: #121212 !important;
-					color: #dddddd !important;
-					font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-				}
-				a { color: #cc0000 !important; }
-				table, th, td { 
-					border-color: #333333 !important;
-					background-color: #1e1e1e !important;
-					color: #dddddd !important;
-				}
-				div, section { background-color: #121212 !important; }
-				input, select { 
-					background-color: #333333 !important; 
-					color: #ffffff !important;
-					border: 1px solid #555555 !important;
-				}
-			`;
-			document.head.appendChild(style);
-			"""
-			
-			webView.evaluateJavaScript(javascript)
-		}
-		
 		private func applyScheduleJavaScript(_ webView: WKWebView) {
 			let javascript = """
-			// Enhance the schedule display
+			// Apply dark mode to schedule page
 			document.body.style.backgroundColor = '#121212';
-			document.body.style.color = '#ffffff';
+			document.body.style.color = '#FFFFFF';
 			
-			// Preserve the division selection functionality
-			var formElement = document.querySelector('form');
-			var selectElement = document.querySelector('select[name="division"]');
-			var submitButton = document.querySelector('input[type="submit"]');
-			
-			// Find the schedule table
-			var scheduleDiv = document.getElementById('box5');
-			if (scheduleDiv) {
-				// Extract the schedule content
-				var scheduleContent = scheduleDiv.innerHTML;
-				
-				// Clear the page and create our own container
-				document.body.innerHTML = '';
-				var container = document.createElement('div');
-				container.style.padding = '15px';
-				container.style.backgroundColor = '#121212';
-				
-				// Recreate the division selection form with modern styling
-				if (formElement && selectElement) {
-					var formContainer = document.createElement('div');
-					formContainer.style.marginBottom = '25px';
-					formContainer.style.padding = '15px';
-					formContainer.style.backgroundColor = '#1e1e1e';
-					formContainer.style.borderRadius = '12px';
-					formContainer.style.display = 'flex';
-					formContainer.style.flexDirection = 'column';
-					formContainer.style.gap = '15px';
-					
-					var label = document.createElement('div');
-					label.textContent = 'Select Division:';
-					label.style.color = '#ffffff';
-					label.style.fontWeight = 'bold';
-					label.style.fontSize = '20px';
-					formContainer.appendChild(label);
-					
-					var newForm = document.createElement('form');
-					newForm.method = formElement.method;
-					newForm.action = formElement.action;
-					
-					// Get all the hidden inputs from the original form
-					var hiddenInputs = formElement.querySelectorAll('input[type="hidden"]');
-					hiddenInputs.forEach(function(input) {
-						var newInput = document.createElement('input');
-						newInput.type = 'hidden';
-						newInput.name = input.name;
-						newInput.value = input.value;
-						newForm.appendChild(newInput);
-					});
-					
-					// Recreate the select with better styling
-					var newSelect = document.createElement('select');
-					newSelect.name = selectElement.name;
-					newSelect.style.backgroundColor = '#333333';
-					newSelect.style.color = '#ffffff';
-					newSelect.style.padding = '12px';
-					newSelect.style.borderRadius = '8px';
-					newSelect.style.border = '1px solid #555555';
-					newSelect.style.fontSize = '18px';
-					newSelect.style.width = '100%';
-					newSelect.style.marginBottom = '15px';
-					
-					// Copy all options
-					Array.from(selectElement.options).forEach(function(option) {
-						var newOption = document.createElement('option');
-						newOption.value = option.value;
-						newOption.textContent = option.textContent;
-						if (option.selected) {
-							newOption.selected = true;
+			// Function to find and process tables for Huntley games
+			function findAndFilterHuntleyGames() {
+				// Find the relevant div to show
+				var targetDiv = document.getElementById('\(parent.divToShow)');
+				if (targetDiv) {
+					// Process all tables in the target div
+					var tables = targetDiv.querySelectorAll('table');
+					tables.forEach(function(table) {
+						// First, identify which columns are Home and Away
+						let homeColIndex = -1;
+						let awayColIndex = -1;
+						
+						// Check header row for column names
+						let headerRow = table.querySelector('tr');
+						if (headerRow) {
+							let headerCells = headerRow.querySelectorAll('th');
+							for (let i = 0; i < headerCells.length; i++) {
+								let cellText = headerCells[i].textContent.trim().toLowerCase();
+								if (cellText === 'home' || cellText === 'home team') {
+									homeColIndex = i;
+								} else if (cellText === 'away' || cellText === 'away team' || cellText === 'visitor') {
+									awayColIndex = i;
+								}
+							}
+							
+							// If header cells don't have th tags, try td tags
+							if (homeColIndex < 0 && awayColIndex < 0) {
+								headerCells = headerRow.querySelectorAll('td');
+								for (let i = 0; i < headerCells.length; i++) {
+									let cellText = headerCells[i].textContent.trim().toLowerCase();
+									if (cellText === 'home' || cellText === 'home team') {
+										homeColIndex = i;
+									} else if (cellText === 'away' || cellText === 'away team' || cellText === 'visitor') {
+										awayColIndex = i;
+									}
+								}
+							}
 						}
-						newSelect.appendChild(newOption);
+						
+						// If we still couldn't identify columns, use reasonable defaults
+						if (homeColIndex < 0 && awayColIndex < 0) {
+							// Try to find Huntley in any cell to determine which columns might be team columns
+							let rows = table.querySelectorAll('tr');
+							let huntleyColumns = [];
+							
+							rows.forEach(function(row) {
+								let cells = row.querySelectorAll('td');
+								for (let i = 0; i < cells.length; i++) {
+									if (cells[i].textContent.includes('Huntley')) {
+										huntleyColumns.push(i);
+									}
+								}
+							});
+							
+							// Count frequencies of columns where Huntley appears
+							if (huntleyColumns.length > 0) {
+								let columnCounts = {};
+								huntleyColumns.forEach(col => {
+									columnCounts[col] = (columnCounts[col] || 0) + 1;
+								});
+								
+								// Get the two most frequent columns
+								let sortedColumns = Object.keys(columnCounts).sort((a, b) => columnCounts[b] - columnCounts[a]);
+								if (sortedColumns.length >= 2) {
+									homeColIndex = parseInt(sortedColumns[0]);
+									awayColIndex = parseInt(sortedColumns[1]);
+								} else if (sortedColumns.length === 1) {
+									// If only one column has Huntley, try to guess the other one
+									homeColIndex = parseInt(sortedColumns[0]);
+									// Assume the away column is adjacent
+									awayColIndex = homeColIndex === 0 ? 1 : homeColIndex - 1;
+								}
+							} else {
+								// Last resort - use columns 2 and 3 which are common for team columns
+								homeColIndex = 2;
+								awayColIndex = 3;
+							}
+						}
+						
+						// Now process all rows to filter for Huntley
+						let rows = table.querySelectorAll('tr');
+						for (let i = 0; i < rows.length; i++) {
+							let row = rows[i];
+							let cells = row.querySelectorAll('td');
+							
+							// Skip rows with no data cells or header rows
+							if (cells.length === 0 || row.querySelector('th')) {
+								row.style.display = ''; // Always show header rows
+								continue;
+							}
+							
+							let huntleyFound = false;
+							
+							// Check if Huntley is in either home or away column
+							if (homeColIndex >= 0 && homeColIndex < cells.length) {
+								if (cells[homeColIndex].textContent.includes('Huntley')) {
+									huntleyFound = true;
+									cells[homeColIndex].innerHTML = cells[homeColIndex].innerHTML.replace(
+										/(Huntley)/gi,
+										'<span style="background-color: yellow; color: black; font-weight: bold;">$1</span>'
+									);
+								}
+							}
+							
+							if (awayColIndex >= 0 && awayColIndex < cells.length) {
+								if (cells[awayColIndex].textContent.includes('Huntley')) {
+									huntleyFound = true;
+									cells[awayColIndex].innerHTML = cells[awayColIndex].innerHTML.replace(
+										/(Huntley)/gi,
+										'<span style="background-color: yellow; color: black; font-weight: bold;">$1</span>'
+									);
+								}
+							}
+							
+							// Hide rows that don't contain Huntley in team columns
+							if (!huntleyFound) {
+								row.style.display = 'none';
+							} else {
+								// Highlight Huntley rows
+								row.style.backgroundColor = '#3c0000'; // Dark red background
+								row.style.color = 'white';
+								row.style.fontWeight = 'bold';
+							}
+						}
 					});
 					
-					newForm.appendChild(newSelect);
+					// Hide all content divs first
+					var contentDivs = document.querySelectorAll('div[id^="box"]');
+					contentDivs.forEach(function(div) {
+						div.style.display = 'none';
+					});
 					
-					// Recreate the submit button with better styling
-					var newSubmit = document.createElement('input');
-					newSubmit.type = 'submit';
-					newSubmit.value = submitButton ? submitButton.value : 'Update';
-					newSubmit.style.backgroundColor = '#cc0000';
-					newSubmit.style.color = '#ffffff';
-					newSubmit.style.padding = '12px 20px';
-					newSubmit.style.border = 'none';
-					newSubmit.style.borderRadius = '8px';
-					newSubmit.style.fontSize = '18px';
-					newSubmit.style.fontWeight = 'bold';
-					newSubmit.style.cursor = 'pointer';
-					newSubmit.style.alignSelf = 'flex-start';
+					// Show only our target div
+					targetDiv.style.display = 'block';
+					targetDiv.style.backgroundColor = '#121212';
+					targetDiv.style.color = '#FFFFFF';
+					targetDiv.style.padding = '15px';
 					
-					// Add a nice hover effect
-					newSubmit.onmouseover = function() {
-						this.style.backgroundColor = '#aa0000';
-					};
-					newSubmit.onmouseout = function() {
-						this.style.backgroundColor = '#cc0000';
-					};
+					// Style tables for better readability
+					var tables = targetDiv.querySelectorAll('table');
+					tables.forEach(function(table) {
+						table.style.backgroundColor = '#1E1E1E';
+						table.style.color = '#FFFFFF';
+						table.style.borderCollapse = 'collapse';
+						table.style.width = '100%';
+						table.style.marginBottom = '20px';
+						
+						var cells = table.querySelectorAll('td, th');
+						cells.forEach(function(cell) {
+							cell.style.border = '1px solid #333';
+							cell.style.padding = '12px';
+							cell.style.fontSize = '16px';
+						});
+						
+						// Style header cells
+						var headerCells = table.querySelectorAll('th');
+						headerCells.forEach(function(cell) {
+							cell.style.backgroundColor = '#333';
+							cell.style.color = '#FFF';
+							cell.style.textAlign = 'center';
+							cell.style.fontWeight = 'bold';
+							cell.style.fontSize = '18px';
+						});
+					});
 					
-					newForm.appendChild(newSubmit);
-					formContainer.appendChild(newForm);
-					
-					// Add the form container to the main container
-					container.appendChild(formContainer);
+					// Style links
+					var links = targetDiv.querySelectorAll('a');
+					links.forEach(function(link) {
+						link.style.color = '#ff6b6b';
+					});
 				}
-				
-				// Add the schedule content
-				var scheduleContainer = document.createElement('div');
-				scheduleContainer.innerHTML = scheduleContent;
-				container.appendChild(scheduleContainer);
-				
-				// Add styles for dark mode and better readability
-				var style = document.createElement('style');
-				style.textContent = `
-					body {
-						background-color: #121212 !important;
-						color: #dddddd !important;
-						font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-						font-size: 18px !important;
-					}
-					table { 
-						width: 100% !important;
-						border-collapse: collapse !important;
-						margin-bottom: 20px !important;
-						border-radius: 8px !important;
-						overflow: hidden !important;
-					}
-					th { 
-						background-color: #cc0000 !important; 
-						color: white !important;
-						padding: 12px 8px !important;
-						font-size: 18px !important;
-						text-align: left !important;
-					}
-					td { 
-						background-color: #1e1e1e !important; 
-						color: #dddddd !important;
-						padding: 12px 8px !important;
-						font-size: 18px !important;
-						border-bottom: 1px solid #333333 !important;
-					}
-					tr:hover td { 
-						background-color: #333333 !important; 
-					}
-					select, input {
-						background-color: #333333 !important;
-						color: white !important;
-						border: 1px solid #555555 !important;
-						padding: 10px !important;
-						font-size: 16px !important;
-						border-radius: 8px !important;
-						-webkit-appearance: none !important;
-					}
-					select {
-						background-image: url("data:image/svg+xml;charset=US-ASCII,<svg width='10' height='5' viewBox='0 0 10 5' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M0 0L5 5L10 0H0Z' fill='white'/></svg>") !important;
-						background-repeat: no-repeat !important;
-						background-position: right 10px center !important;
-						padding-right: 30px !important;
-					}
-					a { color: #cc0000 !important; }
-					.button, input[type="submit"], input[type="button"] {
-						background-color: #cc0000 !important;
-						color: white !important;
-						border: none !important;
-						padding: 12px 20px !important;
-						border-radius: 8px !important;
-						cursor: pointer !important;
-						font-weight: bold !important;
-						transition: background-color 0.2s !important;
-					}
-					.button:hover, input[type="submit"]:hover, input[type="button"]:hover {
-						background-color: #aa0000 !important;
-					}
-					h1, h2, h3 {
-						color: white !important;
-					}
-				`;
-				document.head.appendChild(style);
-				
-				// Remove width constraints
-				var tables = document.querySelectorAll('table');
-				tables.forEach(function(table) {
-					table.removeAttribute('width');
-					table.style.width = '100%';
-				});
-				
-				// Make Huntley teams highlighted
-				var cells = document.querySelectorAll('td');
-				cells.forEach(function(cell) {
-					if (cell.textContent.includes('Huntley')) {
-						cell.style.fontWeight = 'bold';
-						cell.style.color = '#ffffff';
-						cell.style.borderLeft = '4px solid #cc0000';
-					}
-				});
-				
-				// Replace page content with our enhanced version
-				document.body.appendChild(container);
 			}
+			
+			// Hide unnecessary elements
+			var headerElements = document.querySelectorAll('header, nav, #header, .header');
+			headerElements.forEach(function(el) {
+				el.style.display = 'none';
+			});
+			
+			var footerElements = document.querySelectorAll('footer, #footer, .footer');
+			footerElements.forEach(function(el) {
+				el.style.display = 'none';
+			});
+			
+			// Hide ads
+			var adElements = document.querySelectorAll('[id*="ad"], [class*="ad"], [id*="banner"], [class*="banner"]');
+			adElements.forEach(function(el) {
+				el.style.display = 'none';
+			});
+			
+			// Remove background images
+			var elementsWithBg = document.querySelectorAll('[style*="background-image"]');
+			elementsWithBg.forEach(function(el) {
+				el.style.backgroundImage = 'none';
+				el.style.backgroundColor = '#121212';
+			});
+			
+			// Run the filter function
+			findAndFilterHuntleyGames();
+			
+			// Run again after a delay to catch dynamically loaded content
+			setTimeout(findAndFilterHuntleyGames, 1000);
+			"""
+			
+			webView.evaluateJavaScript(javascript) { result, error in
+				if let error = error {
+					print("Schedule JavaScript error: \(error)")
+				} else {
+					print("Schedule JavaScript executed successfully")
+				}
+			}
+		}
+		
+		private func applyHuntleyFilterJavaScript(_ webView: WKWebView) {
+			let javascript = """
+			// Apply dark mode to the page
+			document.body.style.backgroundColor = '#121212';
+			document.body.style.color = '#FFFFFF';
+			
+			// Function to filter schedule tables for Huntley games
+			function filterSchedulesForHuntley() {
+				// Process all tables
+				const tables = document.querySelectorAll('table');
+				tables.forEach(function(table) {
+					// First pass: identify home and away columns
+					let homeColIndex = -1;
+					let awayColIndex = -1;
+					
+					// Find headers to identify columns
+					const rows = table.querySelectorAll('tr');
+					if (rows.length > 0) {
+						// First try to find header cells
+						const headerCells = rows[0].querySelectorAll('th');
+						for (let j = 0; j < headerCells.length; j++) {
+							const text = headerCells[j].textContent.trim().toLowerCase();
+							if (text === 'home' || text === 'home team') {
+								homeColIndex = j;
+							} else if (text === 'away' || text === 'away team' || text === 'visitor') {
+								awayColIndex = j;
+							}
+						}
+						
+						// If no th elements, check first row td elements
+						if (homeColIndex < 0 && awayColIndex < 0) {
+							const firstRowCells = rows[0].querySelectorAll('td');
+							for (let j = 0; j < firstRowCells.length; j++) {
+								const text = firstRowCells[j].textContent.trim().toLowerCase();
+								if (text === 'home' || text === 'home team') {
+									homeColIndex = j;
+								} else if (text === 'away' || text === 'away team' || text === 'visitor') {
+									awayColIndex = j;
+								}
+							}
+						}
+					}
+					
+					// If we still don't have the columns, try to find them by looking for Huntley
+					if (homeColIndex < 0 && awayColIndex < 0) {
+						// Find columns that contain "Huntley"
+						const huntleyColumns = [];
+						rows.forEach(function(row) {
+							const cells = row.querySelectorAll('td');
+							for (let j = 0; j < cells.length; j++) {
+								if (cells[j].textContent.includes('Huntley')) {
+									huntleyColumns.push(j);
+								}
+							}
+						});
+						
+						// Use the most common columns where Huntley appears
+						if (huntleyColumns.length > 0) {
+							const columnCounts = {};
+							huntleyColumns.forEach(col => {
+								columnCounts[col] = (columnCounts[col] || 0) + 1;
+							});
+							
+							// Get the two most frequent columns
+							const sortedColumns = Object.keys(columnCounts).sort((a, b) => 
+								columnCounts[b] - columnCounts[a]
+							);
+							
+							if (sortedColumns.length >= 2) {
+								homeColIndex = parseInt(sortedColumns[0]);
+								awayColIndex = parseInt(sortedColumns[1]);
+							} else if (sortedColumns.length === 1) {
+								// If only one column has Huntley
+								homeColIndex = parseInt(sortedColumns[0]);
+								// Guess the other column is adjacent
+								awayColIndex = homeColIndex + 1;
+								if (awayColIndex >= rows[0].querySelectorAll('td').length) {
+									awayColIndex = homeColIndex - 1;
+								}
+							}
+						} else {
+							// Default to columns that are commonly used for team names
+							// in many sport schedules (usually columns 2-4)
+							homeColIndex = 2;
+							awayColIndex = 3;
+						}
+					}
+					
+					console.log('Found Home column at index:', homeColIndex);
+					console.log('Found Away column at index:', awayColIndex);
+					
+					// Now process all rows to filter for Huntley
+					for (let i = 0; i < rows.length; i++) {
+						const row = rows[i];
+						
+						// Always display header rows
+						if (row.querySelector('th')) {
+							row.style.display = '';
+							continue;
+						}
+						
+						const cells = row.querySelectorAll('td');
+						if (cells.length === 0) continue;
+						
+						let huntleyFound = false;
+						
+						// Check home team column
+						if (homeColIndex >= 0 && homeColIndex < cells.length) {
+							if (cells[homeColIndex].textContent.includes('Huntley')) {
+								huntleyFound = true;
+								cells[homeColIndex].innerHTML = cells[homeColIndex].innerHTML.replace(
+									/(Huntley)/gi,
+									'<span style="background-color: yellow; color: black; font-weight: bold;">$1</span>'
+								);
+							}
+						}
+						
+						// Check away team column
+						if (awayColIndex >= 0 && awayColIndex < cells.length) {
+							if (cells[awayColIndex].textContent.includes('Huntley')) {
+								huntleyFound = true;
+								cells[awayColIndex].innerHTML = cells[awayColIndex].innerHTML.replace(
+									/(Huntley)/gi,
+									'<span style="background-color: yellow; color: black; font-weight: bold;">$1</span>'
+								);
+							}
+						}
+						
+						// Show/hide rows based on Huntley
+						if (huntleyFound) {
+							row.style.display = '';
+							row.style.backgroundColor = '#3c0000'; // Dark red
+							row.style.fontWeight = 'bold';
+							
+							// Make all cells in Huntley rows have white text
+							for (let j = 0; j < cells.length; j++) {
+								cells[j].style.color = 'white';
+							}
+						} else {
+							row.style.display = 'none';
+						}
+					}
+					
+					// Apply styles to the table
+					table.style.backgroundColor = '#1E1E1E';
+					table.style.color = '#FFFFFF';
+					table.style.borderCollapse = 'collapse';
+					table.style.width = '100%';
+					table.style.marginBottom = '20px';
+					
+					// Style all cells
+					const allCells = table.querySelectorAll('td, th');
+					allCells.forEach(function(cell) {
+						cell.style.border = '1px solid #444';
+						cell.style.padding = '12px';
+						cell.style.fontSize = '16px';
+					});
+					
+					// Style headers
+					const headerCells = table.querySelectorAll('th');
+					headerCells.forEach(function(cell) {
+						cell.style.backgroundColor = '#333';
+						cell.style.color = '#FFF';
+						cell.style.fontWeight = 'bold';
+						cell.style.fontSize = '18px';
+						cell.style.textAlign = 'center';
+					});
+				});
+				
+				// Add a counter of visible games
+				const visibleRows = document.querySelectorAll('tr:not([style*="display: none"])');
+				const gameCount = visibleRows.length - document.querySelectorAll('tr th').length;
+				
+				const counterDiv = document.createElement('div');
+				counterDiv.innerHTML = `<p style="text-align: center; font-size: 20px; margin: 20px 0; color: #fff; background-color: #3c0000; padding: 10px; border-radius: 5px; font-weight: bold;">Showing ${gameCount} Huntley games</p>`;
+				document.body.insertBefore(counterDiv, document.body.firstChild);
+			}
+			
+			// Style the entire page
+			function stylePageForDarkMode() {
+				// Hide unnecessary elements
+				const elementsToHide = document.querySelectorAll('header, nav, #header, .header, footer, #footer, .footer, [id*="ad"], [class*="ad"], [id*="banner"], [class*="banner"]');
+				elementsToHide.forEach(function(el) {
+					el.style.display = 'none';
+				});
+				
+				// Set dark background for all containers
+				const containers = document.querySelectorAll('div, section, article, main');
+				containers.forEach(function(el) {
+					el.style.backgroundColor = '#121212';
+					el.style.color = '#FFFFFF';
+				});
+				
+				// Style links
+				const links = document.querySelectorAll('a');
+				links.forEach(function(link) {
+					link.style.color = '#ff6b6b';
+				});
+				
+				// Remove background images
+				const elementsWithBg = document.querySelectorAll('[style*="background-image"]');
+				elementsWithBg.forEach(function(el) {
+					el.style.backgroundImage = 'none';
+					el.style.backgroundColor = '#121212';
+				});
+				
+				// Increase readability
+				document.body.style.fontSize = '16px';
+				document.body.style.lineHeight = '1.5';
+				document.body.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+			}
+			
+			// Apply styles and filtering
+			stylePageForDarkMode();
+			filterSchedulesForHuntley();
+			
+			// Run again after a delay to catch any dynamically loaded content
+			setTimeout(filterSchedulesForHuntley, 1500);
+			"""
+			
+			webView.evaluateJavaScript(javascript) { result, error in
+				if let error = error {
+					print("Dark mode JavaScript error: \(error)")
+				} else {
+					print("Dark mode JavaScript executed successfully")
+				}
+			}
+		}
+	}
+}
+
+// For WebViews that need to highlight Huntley games in schedules
+struct ScheduleWebView: UIViewRepresentable {
+	let url: URL
+	
+	func makeUIView(context: Context) -> WKWebView {
+		let webView = WKWebView()
+		webView.navigationDelegate = context.coordinator
+		webView.load(URLRequest(url: url))
+		return webView
+	}
+	
+	func updateUIView(_ webView: WKWebView, context: Context) {}
+	
+	func makeCoordinator() -> Coordinator {
+		Coordinator(self)
+	}
+	
+	class Coordinator: NSObject, WKNavigationDelegate {
+		let parent: ScheduleWebView
+		
+		init(_ parent: ScheduleWebView) {
+			self.parent = parent
+		}
+		
+		func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+			let javascript = """
+			// Function to filter schedule tables for Huntley games only
+			function filterHuntleyGames() {
+				// Process all tables in the document
+				const tables = document.querySelectorAll('table');
+				tables.forEach(function(table) {
+					// Get all rows in the table
+					const rows = table.querySelectorAll('tr');
+					
+					// Find header row first to identify team columns
+					let homeColIndex = -1;
+					let awayColIndex = -1;
+					
+					// Find the header row and identify team column indices
+					for (let i = 0; i < rows.length; i++) {
+						const cells = rows[i].querySelectorAll('th, td');
+						for (let j = 0; j < cells.length; j++) {
+							const text = cells[j].textContent.trim().toLowerCase();
+							if (text === 'home' || text === 'home team') {
+								homeColIndex = j;
+							} else if (text === 'away' || text === 'away team' || text === 'visitor') {
+								awayColIndex = j;
+							}
+						}
+						
+						// If we found team columns, we can stop looking
+						if (homeColIndex >= 0 || awayColIndex >= 0) break;
+					}
+					
+					// If we couldn't identify columns specifically, use reasonable defaults
+					if (homeColIndex < 0 && awayColIndex < 0) {
+						// Many schedules have home/away teams around columns 2-4
+						homeColIndex = 2;
+						awayColIndex = 3;
+					}
+					
+					// Now process data rows to hide/show and highlight based on team names
+					for (let i = 0; i < rows.length; i++) {
+						const row = rows[i];
+						const cells = row.querySelectorAll('td');
+						
+						// Skip rows with no data cells (like headers)
+						if (cells.length === 0) continue;
+						
+						let huntleyFound = false;
+						
+						// Check if "Huntley" is in either team column
+						if (homeColIndex >= 0 && homeColIndex < cells.length) {
+							if (cells[homeColIndex].textContent.includes("Huntley")) {
+								huntleyFound = true;
+								cells[homeColIndex].innerHTML = cells[homeColIndex].innerHTML.replace(
+									/(Huntley)/gi,
+									'<span style="background-color: yellow; color: black; font-weight: bold;">$1</span>'
+								);
+							}
+						}
+						
+						if (awayColIndex >= 0 && awayColIndex < cells.length) {
+							if (cells[awayColIndex].textContent.includes("Huntley")) {
+								huntleyFound = true;
+								cells[awayColIndex].innerHTML = cells[awayColIndex].innerHTML.replace(
+									/(Huntley)/gi,
+									'<span style="background-color: yellow; color: black; font-weight: bold;">$1</span>'
+								);
+							}
+						}
+						
+						// Hide rows that don't contain Huntley in team columns
+						if (!huntleyFound) {
+							row.style.display = 'none';
+						} else {
+							// Make Huntley rows more visible
+							row.style.backgroundColor = '#3c0000';
+							row.style.color = 'white';
+							row.style.fontWeight = 'bold';
+						}
+					}
+				});
+				
+				// Apply dark mode styling
+				document.body.style.backgroundColor = '#121212';
+				document.body.style.color = '#FFFFFF';
+				
+				// Style tables
+				const tables = document.querySelectorAll('table');
+				tables.forEach(function(table) {
+					table.style.backgroundColor = '#1E1E1E';
+					table.style.color = '#FFFFFF';
+					table.style.borderCollapse = 'collapse';
+					table.style.width = '100%';
+					table.style.marginBottom = '20px';
+					
+					const cells = table.querySelectorAll('td, th');
+					cells.forEach(function(cell) {
+						cell.style.border = '1px solid #333';
+						cell.style.padding = '10px';
+					});
+				});
+			}
+			
+			// Run the filtering function
+			filterHuntleyGames();
+			
+			// Also run again after a delay to catch any dynamically loaded content
+			setTimeout(filterHuntleyGames, 1000);
 			"""
 			
 			webView.evaluateJavaScript(javascript) { result, error in
 				if let error = error {
 					print("JavaScript error: \(error)")
-				} else {
-					print("Schedule JavaScript executed successfully")
 				}
 			}
 		}

@@ -83,7 +83,7 @@ struct SevenVSevenView: View {
 										Button(action: {
 											showingCalendarActionSheet = true
 										}) {
-											mainButtonView(image: "icon_Calendar", label: "League Calendar", bg: Color.white.opacity(1.0), fg: .black)
+											mainButtonView(image: "icon_Calendar", label: "7v7 Schedules", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
 											Button("K-3") {
