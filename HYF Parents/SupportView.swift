@@ -196,7 +196,7 @@ struct SupportView: View {
 						return Alert(
 							title: Text("About HYF Parents"),
 							message: Text("This app was made for Huntley Youth Football and for the Player Parents to put all resources in their hands."),
-							version: Text("Version 1.03")
+							version: Text("Version 1.03"),
 							dismissButton: .default(Text("OK"))
 						)
 					case .mailError:
