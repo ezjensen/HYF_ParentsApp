@@ -217,10 +217,13 @@ struct SevenVSevenView: View {
 			if title.contains("Schedule") {
 				EnhancedWebView(url: url, divToShow: "box5")
 					.navigationBarTitle(title, displayMode: .inline)
-					.navigationBarItems(trailing: Button("Done") {
-						showingWebView = false
-					})
-					.preferredColorScheme(.dark) // Force dark mode
+					.navigationBarItems(
+						leading: shareButton(url: url),
+						trailing: Button("Done") {
+							showingWebView = false
+						}
+					)
+					.preferredColorScheme(.dark)
 			} else {
 				StandardWebView(url: url)
 					.navigationBarTitle(title, displayMode: .inline)
@@ -229,7 +232,31 @@ struct SevenVSevenView: View {
 					})
 			}
 		}
-		.accentColor(.red) // Use team color for navigation elements
+		.accentColor(.red)
+	}
+	
+	private func shareButton(url: URL) -> some View {
+		Button(action: {
+			let shareText = "Check out the \(webViewTitle):"
+			let shareItems: [Any] = [shareText, url]
+			
+			let activityVC = UIActivityViewController(
+				activityItems: shareItems,
+				applicationActivities: nil
+			)
+			
+			if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+			   let rootViewController = windowScene.windows.first?.rootViewController {
+				// Use the right controller (account for possible presented controllers)
+				var currentVC = rootViewController
+				while let presentedVC = currentVC.presentedViewController {
+					currentVC = presentedVC
+				}
+				currentVC.present(activityVC, animated: true)
+			}
+		}) {
+			Image(systemName: "square.and.arrow.up")
+		}
 	}
 	
 	// MARK: - Button view component

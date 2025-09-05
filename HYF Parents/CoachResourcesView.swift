@@ -9,6 +9,22 @@ import SwiftUI
 import WebKit
 import PDFKit
 
+struct CoachResource: Identifiable, Codable {
+	var id: Int
+	var title: String
+	var url: String
+	var activeResource: Bool
+	var resourceType: String?
+	
+	enum CodingKeys: String, CodingKey {
+		case id
+		case title = "resourceName"
+		case url = "resourceLink"
+		case activeResource = "ActiveResource"
+		case resourceType = "resource_type"
+	}
+}
+
 struct CoachResourcesView: View {
 	@Environment(\.openURL) var openURL
 	@Environment(\.dismiss) var dismiss
@@ -22,18 +38,13 @@ struct CoachResourcesView: View {
 	@State private var showingSafetyResourcesList = false
 	@State private var appToInstall = ""
 	@State private var appStoreURL: URL?
+	@State private var safetyResources: [CoachResource] = []
+	@State private var isLoading = true
+	@State private var errorMessage: String? = nil
 	
 	let columns = [
 		GridItem(.fixed(100), spacing: 60),
 		GridItem(.fixed(100), spacing: 60)
-	]
-	
-	// Safety resource documents
-	let safetyResources = [
-		(title: "10 Questions About Head Safety", url: "https://cdn1.sportngin.com/attachments/document/6e68-2618765/10_questions_about_head_safety.pdf"),
-		(title: "Heat and Hydration Guidelines", url: "https://cdn1.sportngin.com/attachments/document/abf1-2618766/Heat_And_Hydration_Guidelines.pdf"),
-		(title: "TCYFL Concussion Flow Chart", url: "https://cdn1.sportngin.com/attachments/document/c0a4-2618767/TCYFL_Concussion_Flow_Chart_.pdf"),
-		(title: "TCYFL Concussion Policy", url: "https://cdn1.sportngin.com/attachments/document/33f3-2618769/TCYFL_Concussion_Policy.docx")
 	]
 	
 	var body: some View {
@@ -113,6 +124,24 @@ struct CoachResourcesView: View {
 											mainButtonView(image: "icon_PlaymakerX", label: "Playmaker X", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										
+										// PCA Football button - Updated to use simpler approach
+										Button(action: {
+											if let url = URL(string: "https://pca.myabsorb.com/#/login") {
+												UIApplication.shared.open(url, options: [:], completionHandler: nil)
+											}
+										}) {
+											mainButtonView(image: "icon_PCA_Football", label: "Positive Coaching Alliance", bg: Color.white.opacity(1.0), fg: .black)
+										}
+										
+										// USA Football button - Updated to use simpler approach
+										Button(action: {
+											if let url = URL(string: "https://footballdevelopment.com/courses-certifications/") {
+												UIApplication.shared.open(url, options: [:], completionHandler: nil)
+											}
+										}) {
+											mainButtonView(image: "icon_USA_Football", label: "USA Football", bg: Color.white.opacity(1.0), fg: .black)
+										}
+										
 										// Invisible placeholders for grid layout consistency
 										Button(action: {}) {
 											VStack(spacing: 8) {
@@ -184,47 +213,122 @@ struct CoachResourcesView: View {
 		}
 		.navigationViewStyle(StackNavigationViewStyle())
 		.accentColor(.red)
+		.onAppear {
+			fetchSafetyResources()
+		}
+	}
+	
+	// MARK: - Fetch Safety Resources from Supabase
+	private func fetchSafetyResources() {
+		isLoading = true
+		errorMessage = nil
+		
+		Task {
+			do {
+				// Query with debug logs
+				print("Starting Supabase query to CoachResources table")
+				
+				let resources: [CoachResource] = try await supabase
+					.from("CoachResources")
+					.select()
+					.order("resourceName")  // Sort alphabetically by resourceName
+					.execute()
+					.value
+				
+				print("Fetched \(resources.count) resources successfully")
+				
+				await MainActor.run {
+					self.safetyResources = resources
+					self.isLoading = false
+				}
+			} catch {
+				print("Error fetching resources: \(error)")
+				await MainActor.run {
+					self.errorMessage = error.localizedDescription
+					self.safetyResources = []
+					self.isLoading = false
+				}
+			}
+		}
 	}
 	
 	// MARK: - Safety Resources List View
 	private func safetyResourcesListView() -> some View {
 		NavigationView {
-			List {
-				ForEach(safetyResources, id: \.title) { resource in
-					NavigationLink(destination: {
-						if resource.url.hasSuffix(".pdf") {
-							if let url = URL(string: resource.url) {
-								PDFPreviewView(url: url, title: resource.title)
-							}
-						} else if resource.url.hasSuffix(".docx") || resource.url.hasSuffix(".doc") {
-							if let url = URL(string: resource.url) {
-								StandardWebView(url: url)
-									.navigationBarTitle(resource.title, displayMode: .inline)
-							}
+			ZStack {
+				if isLoading {
+					ProgressView("Loading resources...")
+				} else {
+					List {
+						if let error = errorMessage {
+							Text("Error: \(error)")
+								.foregroundColor(.red)
+								.padding()
+						} else if safetyResources.isEmpty {
+							Text("No safety resources available")
+								.foregroundColor(.gray)
+								.padding()
 						} else {
-							if let url = URL(string: resource.url) {
-								StandardWebView(url: url)
-									.navigationBarTitle(resource.title, displayMode: .inline)
+							ForEach(safetyResources) { resource in
+								NavigationLink(destination: {
+									if resource.url.hasSuffix(".pdf") {
+										if let url = URL(string: resource.url) {
+											PDFPreviewView(url: url, title: resource.title)
+										}
+									} else if resource.url.hasSuffix(".docx") || resource.url.hasSuffix(".doc") {
+										if let url = URL(string: resource.url) {
+											StandardWebView(url: url)
+												.navigationBarTitle(resource.title, displayMode: .inline)
+										}
+									} else {
+										if let url = URL(string: resource.url) {
+											StandardWebView(url: url)
+												.navigationBarTitle(resource.title, displayMode: .inline)
+										}
+									}
+								}) {
+									HStack {
+										// Show appropriate icon based on file type
+										if resource.url.hasSuffix(".pdf") {
+											Image(systemName: "doc.fill")
+												.foregroundColor(.red)
+										} else if resource.url.hasSuffix(".docx") || resource.url.hasSuffix(".doc") {
+											Image(systemName: "doc.text.fill")
+												.foregroundColor(.blue)
+										} else {
+											Image(systemName: "link")
+												.foregroundColor(.gray)
+										}
+										
+										Text(resource.title)
+											.foregroundColor(.primary)
+									}
+									.padding(.vertical, 4)
+								}
 							}
 						}
-					}) {
-						HStack {
-							// Show appropriate icon based on file type
-							if resource.url.hasSuffix(".pdf") {
-								Image(systemName: "doc.fill")
-									.foregroundColor(.red)
-							} else if resource.url.hasSuffix(".docx") || resource.url.hasSuffix(".doc") {
-								Image(systemName: "doc.text.fill")
-									.foregroundColor(.blue)
-							} else {
-								Image(systemName: "link")
-									.foregroundColor(.gray)
+					}
+					
+					// Add a refresh button if not loading
+					if !isLoading {
+						VStack {
+							Spacer()
+							HStack {
+								Spacer()
+								Button(action: {
+									fetchSafetyResources()
+								}) {
+									Image(systemName: "arrow.clockwise.circle.fill")
+										.font(.system(size: 24))
+										.foregroundColor(.red)
+										.padding()
+										.background(Circle().fill(Color.white.opacity(0.9)))
+										.shadow(radius: 3)
+								}
+								.padding(.trailing, 20)
+								.padding(.bottom, 20)
 							}
-							
-							Text(resource.title)
-								.foregroundColor(.primary)
 						}
-						.padding(.vertical, 4)
 					}
 				}
 			}
@@ -234,6 +338,11 @@ struct CoachResourcesView: View {
 			})
 		}
 		.accentColor(.red)
+		.onAppear {
+			if safetyResources.isEmpty {
+				fetchSafetyResources()
+			}
+		}
 	}
 	
 	// MARK: - Helper to create WebView sheet

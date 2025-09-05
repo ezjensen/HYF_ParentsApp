@@ -76,7 +76,7 @@ struct TackleView: View {
 										}
 										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
 											// Varsity Divisions
-											Button("Vasity - BIG 10") {
+											Button("Varsity - BIG 10") {
 												webViewTitle = "Varsity Schedule"
 												webViewURL = URL(string: "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=big10&division=varsity")
 												showingWebView = true
@@ -219,9 +219,12 @@ struct TackleView: View {
 			if title.contains("Schedule") {
 				EnhancedWebView(url: url, divToShow: "box5")
 					.navigationBarTitle(title, displayMode: .inline)
-					.navigationBarItems(trailing: Button("Done") {
-						showingWebView = false
-					})
+					.navigationBarItems(
+						leading: shareButton(url: url),
+						trailing: Button("Done") {
+							showingWebView = false
+						}
+					)
 					.preferredColorScheme(.dark)
 			} else {
 				StandardWebView(url: url)
@@ -232,6 +235,30 @@ struct TackleView: View {
 			}
 		}
 		.accentColor(.red)
+	}
+	
+	private func shareButton(url: URL) -> some View {
+		Button(action: {
+			let shareText = "Check out the \(webViewTitle):"
+			let shareItems: [Any] = [shareText, url]
+			
+			let activityVC = UIActivityViewController(
+				activityItems: shareItems,
+				applicationActivities: nil
+			)
+			
+			if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+			   let rootViewController = windowScene.windows.first?.rootViewController {
+				// Use the right controller (account for possible presented controllers)
+				var currentVC = rootViewController
+				while let presentedVC = currentVC.presentedViewController {
+					currentVC = presentedVC
+				}
+				currentVC.present(activityVC, animated: true)
+			}
+		}) {
+			Image(systemName: "square.and.arrow.up")
+		}
 	}
 	
 	// MARK: - Button view component

@@ -18,6 +18,8 @@ struct SupportView: View {
 	@State private var feedbackMessage = ""
 	@FocusState private var isTextEditorFocused: Bool
 	@State private var shouldNavigateHome = false
+	@State private var isShowingShareSheet = false
+	@State private var shareItems: [Any] = []
 	
 	// Add this to manage alert priorities
 	@State private var activeAlert: ActiveAlert? = nil
@@ -175,6 +177,24 @@ struct SupportView: View {
 									.padding(.horizontal)
 									.disabled(feedbackMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 									.opacity(feedbackMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1.0)
+									
+									// Share App button
+									Button(action: {
+										shareApp()
+									}) {
+										HStack {
+											Image(systemName: "square.and.arrow.up")
+												.font(.headline)
+											Text("Share This App")
+												.font(.headline)
+										}
+										.foregroundColor(.white)
+										.padding()
+										.frame(maxWidth: .infinity)
+										.background(Color.blue.opacity(0.8))
+										.cornerRadius(10)
+									}
+									.padding(.horizontal)
 								}
 								.padding(.vertical)
 								.background(Color.gray.opacity(0.2))
@@ -193,9 +213,13 @@ struct SupportView: View {
 			.alert(item: $activeAlert) { alertType in
 				switch alertType {
 					case .about:
+						// Get app version from Bundle
+						let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+						let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
+						
 						return Alert(
 							title: Text("About HYF Parents"),
-							message: Text("This app was made for Huntley Youth Football and for the Player Parents to put all resources in their hands."),
+							message: Text("This app was made for Huntley Youth Football and for the Player Parents to put all resources in their hands.\n\nVersion: \(appVersion) (\(buildNumber))"),
 							dismissButton: .default(Text("OK"))
 						)
 					case .mailError:
@@ -240,10 +264,31 @@ struct SupportView: View {
 					message: feedbackMessage
 				)
 			}
+			.sheet(isPresented: $isShowingShareSheet) {
+				ShareSheet(items: shareItems)
+			}
 		}
-	
 		.navigationViewStyle(StackNavigationViewStyle())
 		.accentColor(.red)
+	}
+	
+	private func shareApp() {
+		// App Store URL with the correct ID
+		let appStoreURL = "https://apps.apple.com/us/app/hyf-parents/id6748963105"
+		
+		// Text to share
+		let shareText = "Check out the HYF Parents app for Huntley Youth Football!"
+		
+		// Create a proper URL object
+		if let url = URL(string: appStoreURL) {
+			// Put the text first, then the URL as separate items
+			shareItems = [shareText, url]
+			isShowingShareSheet = true
+		} else {
+			// Fallback if URL is invalid
+			shareItems = [shareText]
+			isShowingShareSheet = true
+		}
 	}
 }
 

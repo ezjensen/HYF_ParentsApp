@@ -99,6 +99,7 @@ struct FieldDetailView: View {
 	@State private var isLoadingLocation = true
 	@State private var geocodingError = false
 	@State private var viewId = UUID()
+	@State private var isShowingShareSheet = false
 	
 	var body: some View {
 		VStack {
@@ -142,9 +143,21 @@ struct FieldDetailView: View {
 			}
 			
 			VStack(alignment: .leading, spacing: 12) {
-				Text(field.name)
-					.font(.title)
-					.fontWeight(.bold)
+				HStack {
+					Text(field.name)
+						.font(.title)
+						.fontWeight(.bold)
+					
+					Spacer()
+					
+					Button(action: {
+						isShowingShareSheet = true
+					}) {
+						Image(systemName: "square.and.arrow.up")
+							.foregroundColor(.red)
+							.font(.title2)
+					}
+				}
 				
 				Text(field.address)
 					.font(.body)
@@ -177,6 +190,29 @@ struct FieldDetailView: View {
 			// Manually start geocoding when view appears
 			geocodeAddress()
 		}
+		.sheet(isPresented: $isShowingShareSheet) {
+			ShareSheet(items: shareItems)
+		}
+	}
+	
+	var shareItems: [Any] {
+		// Create the content to share
+		let fieldInfo = """
+		Field: \(field.name)
+		Address: \(field.address)
+		\(field.notes != nil && !field.notes!.isEmpty ? "Notes: \(field.notes!)" : "")
+		"""
+		
+		// Create URL for Google Maps if available
+		var items: [Any] = [fieldInfo]
+		if let locationAnnotation = locationAnnotation {
+			let mapURL = "https://maps.google.com/maps?q=\(locationAnnotation.coordinate.latitude),\(locationAnnotation.coordinate.longitude)"
+			if let url = URL(string: mapURL) {
+				items.append(url)
+			}
+		}
+		
+		return items
 	}
 	
 	func geocodeAddress() {
@@ -239,3 +275,5 @@ struct FieldDetailView: View {
 		mapItem.openInMaps()
 	}
 }
+
+
