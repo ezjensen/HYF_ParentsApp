@@ -11,6 +11,7 @@ import Supabase
 // MARK: - Main Screen with Background, Logo, and Overlay
 struct MainScreenView: View {
 	@Environment(\.openURL) var openURL
+	@EnvironmentObject private var fieldService: FieldService
 	@Binding var selectedTab: Int
 	@State private var showImportantDates = false
 	@State private var showRegistration = false

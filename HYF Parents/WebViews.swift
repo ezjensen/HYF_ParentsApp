@@ -126,26 +126,16 @@ struct EnhancedWebView: UIViewRepresentable {
 	}
 	
 	func makeCoordinator() -> Coordinator {
-		Coordinator(self)
+		return Coordinator(self)
 	}
 	
 	class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
 		var parent: EnhancedWebView
-		private let fieldService = FieldService()
-		private var fields: [Field]? = nil
 		
 		init(_ parent: EnhancedWebView) {
 			self.parent = parent
 			super.init()
-			// Pre-fetch fields when coordinator is initialized
-			loadFields()
-		}
-		
-		private func loadFields() {
-			let fieldService = FieldService()
-			fieldService.loadFields()
-			self.fields = fieldService.fields
-			print("Successfully loaded \(fieldService.fields.count) fields from static data")
+			// No need to store fields locally - use FieldService.shared directly
 		}
 		
 		// Handle messages from JavaScript
@@ -166,34 +156,35 @@ struct EnhancedWebView: UIViewRepresentable {
 				}
 			} else if message.name == "fieldsHandler" {
 				if let webView = message.webView {
-					if let fields = self.fields {
-						// Convert fields to JSON
-						do {
-							let encoder = JSONEncoder()
-							let fieldsData = try encoder.encode(fields)
-							if let fieldsJson = String(data: fieldsData, encoding: .utf8) {
-								// Send fields data to JavaScript, escape single quotes
-								let script = "receiveFieldsData('\(fieldsJson.replacingOccurrences(of: "'", with: "\\'"))');"
-								webView.evaluateJavaScript(script) { result, error in
-									if let error = error {
-										print("Error sending fields data: \(error)")
-										self.sendHardcodedFields(to: webView)
-									} else {
-										print("Fields data sent successfully")
-									}
+					// Get fields from the shared service
+					let fields = FieldService.shared.fields.isEmpty ?
+					FieldLocationsData.fields : FieldService.shared.fields
+					
+					// Convert fields to JSON
+					do {
+						let encoder = JSONEncoder()
+						let fieldsData = try encoder.encode(fields)
+						if let fieldsJson = String(data: fieldsData, encoding: .utf8) {
+							// Send fields data to JavaScript, escape single quotes
+							let script = "receiveFieldsData('\(fieldsJson.replacingOccurrences(of: "'", with: "\\'"))');"
+							webView.evaluateJavaScript(script) { result, error in
+								if let error = error {
+									print("Error sending fields data: \(error)")
+									self.sendHardcodedFields(to: webView)
+								} else {
+									print("Fields data sent successfully")
 								}
 							}
-						} catch {
-							print("Error encoding fields: \(error.localizedDescription)")
-							sendHardcodedFields(to: webView)
 						}
-					} else {
-						// No fields data available, use hardcoded fallback
+					} catch {
+						print("Error encoding fields: \(error.localizedDescription)")
 						sendHardcodedFields(to: webView)
 					}
 				}
 			}
 		}
+		
+		/*
 		
 		private func sendHardcodedFields(to webView: WKWebView) {
 			// Use the static fallback data for fields
@@ -222,6 +213,9 @@ struct EnhancedWebView: UIViewRepresentable {
 			}
 		}
 		
+		 */
+		 
+		 
 		func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
 			// Check URL to determine which JavaScript to apply
 			if parent.url.absoluteString.contains("maps.php") {

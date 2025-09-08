@@ -10,6 +10,7 @@ import WebKit
 
 struct SevenVSevenView: View {
 	@Environment(\.openURL) var openURL
+	
 	@State private var showingRulesActionSheet = false
 	@State private var selectedRulesURL: URL? = nil
 	@State private var showingPDFView = false
@@ -19,6 +20,10 @@ struct SevenVSevenView: View {
 	@State private var showingCalendarActionSheet = false
 	@State private var rulesTitle: String = "League Rules"
 	@Binding var selectedTab: Int
+	
+	// Use the shared stores
+	@EnvironmentObject private var rulesStore: LeagueRulesStore
+	@EnvironmentObject private var scheduleStore: ScheduleStore
 	
 	// For preview purposes
 	init(selectedTab: Binding<Int> = .constant(2)) {
@@ -34,14 +39,6 @@ struct SevenVSevenView: View {
 		"Facebook": "https://www.facebook.com/groups/tcyfl7v7",
 		"Instagram": "https://www.instagram.com/huntleyredraiders7v7",
 		"X": "https://twitter.com/huntley7v7"
-	]
-	
-	// Schedule URLs for different divisions
-	private let scheduleURLs = [
-		"K-3": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=K3",
-		"4-5th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=4-5th",
-		"6-7th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=6-7th",
-		"8th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=8th"
 	]
 	
 	var body: some View {
@@ -62,7 +59,6 @@ struct SevenVSevenView: View {
 									socialButton(image: "icon_Facebook", url: "https://www.facebook.com/Huntley-Red-Raiders-Youth-Football-League-112134028046472", label: "Facebook")
 									socialButton(image: "icon_Instagram", url: "https://www.instagram.com/hyf_redraiders/", label: "Instagram")
 									socialButton(image: "icon_X", url: "https://twitter.com/huntleyyouthrr", label: "X")
-									//socialButton(image: "icon_YouTube", url: "https://www.huntleyyouthfootball.org/home", label: "Youtube")
 									socialButton(image: "icon_Website", url: "https://www.huntleyyouthfootball.org/home", label: "HYF Red Raiders")
 								}
 								.padding(.vertical, 4)
@@ -83,74 +79,93 @@ struct SevenVSevenView: View {
 										Button(action: {
 											showingCalendarActionSheet = true
 										}) {
-											mainButtonView(image: "icon_Calendar", label: "7v7 Schedules", bg: Color.white.opacity(1.0), fg: .black)
+											mainButtonView(image: "icon_Calendar", label: "7v7 \nSchedules", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
 											Button("K-3") {
 												webViewTitle = "K-3 Schedule"
-												webViewURL = URL(string: scheduleURLs["K-3"] ?? "")
+												webViewURL = URL(string: scheduleStore.sevenOnSevenK3Link)
 												showingWebView = true
 											}
 											Button("4-5th") {
 												webViewTitle = "4-5th Schedule"
-												webViewURL = URL(string: scheduleURLs["4-5th"] ?? "")
+												webViewURL = URL(string: scheduleStore.sevenOnSeven4To5Link)
 												showingWebView = true
 											}
 											Button("6-7th") {
 												webViewTitle = "6-7th Schedule"
-												webViewURL = URL(string: scheduleURLs["6-7th"] ?? "")
+												webViewURL = URL(string: scheduleStore.sevenOnSeven6To7Link)
 												showingWebView = true
 											}
 											Button("8th") {
 												webViewTitle = "8th Schedule"
-												webViewURL = URL(string: scheduleURLs["8th"] ?? "")
+												webViewURL = URL(string: scheduleStore.sevenOnSeven8Link)
 												showingWebView = true
 											}
 										}
 										
-										/*
-										// Field Maps - Will open in-app when URL is provided
-										Button(action: {
-											webViewTitle = "Field Maps"
-											webViewURL = URL(string: "https://www.tcyfl.net/maps.php")
-											showingWebView = true
-										}) {
-											mainButtonView(image: "icon_Maps", label: "Field Maps", bg: Color.white.opacity(1.0), fg: .black)
-										}
-										*/
-										 
-										// League Rules Button with Action Sheet
-										Button(action: {
-											showingRulesActionSheet = true
-										}) {
-											VStack(spacing: 8) {
-												Image("icon_Rules")
-													.resizable()
-													.frame(width: 70, height: 70)
-												Text("7v7 League Rules")
-													.font(.headline)
-													.fontWeight(.semibold)
-													.foregroundColor(.black)
-													.multilineTextAlignment(.center)
-													.lineLimit(nil)
-													.minimumScaleFactor(0.7)
+										// League Rules Button with Action Sheet - Using shared store
+										if rulesStore.isLoading {
+											ProgressView()
+												.tint(.white)
+												.frame(width: 120, height: 130)
+												.background(Color.white.opacity(1.0))
+												.cornerRadius(16)
+										} else if rulesStore.loadError {
+											Button(action: {
+												rulesStore.fetchAllRules()
+											}) {
+												VStack(spacing: 8) {
+													Image("icon_Rules")
+														.resizable()
+														.frame(width: 70, height: 70)
+													Text("Retry Loading")
+														.font(.headline)
+														.fontWeight(.semibold)
+														.foregroundColor(.black)
+												}
+												.frame(width: 120, height: 130)
+												.background(Color.white.opacity(1.0))
+												.cornerRadius(16)
+												.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
 											}
-											.frame(width: 120, height: 130)
-											.background(Color.white.opacity(1.0))
-											.cornerRadius(16)
-											.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
-										}
-										.buttonStyle(.plain)
-										.confirmationDialog("Select Rules", isPresented: $showingRulesActionSheet) {
-											Button("K-3 Rules") {
-												selectedRulesURL = URL(string: "https://www.tcyfl.net/grabit.php?file=2025FINALK3_rules.pdf")
-												rulesTitle = "7v7 K-3 Rules"
-												showingPDFView = true
+										} else {
+											Button(action: {
+												showingRulesActionSheet = true
+											}) {
+												VStack(spacing: 8) {
+													Image("icon_Rules")
+														.resizable()
+														.frame(width: 70, height: 70)
+													Text("7v7 \nRules")
+														.font(.headline)
+														.fontWeight(.semibold)
+														.foregroundColor(.black)
+														.multilineTextAlignment(.center)
+														.lineLimit(nil)
+														.minimumScaleFactor(0.7)
+												}
+												.frame(width: 120, height: 130)
+												.background(Color.white.opacity(1.0))
+												.cornerRadius(16)
+												.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
 											}
-											Button("4-8 Rules") {
-												selectedRulesURL = URL(string: "https://www.tcyfl.net/grabit.php?file=2025FINAL7_7_rules.pdf")
-												rulesTitle = "7v7 4-8 Rules"
-												showingPDFView = true
+											.buttonStyle(.plain)
+											.confirmationDialog("Select Rules", isPresented: $showingRulesActionSheet) {
+												Button("K-3 Rules") {
+													if let url = URL(string: rulesStore.sevenOnSevenK3RulesLink) {
+														selectedRulesURL = url
+														rulesTitle = "7v7 K-3 Rules"
+														showingPDFView = true
+													}
+												}
+												Button("4-8 Rules") {
+													if let url = URL(string: rulesStore.sevenOnSevenUpperRulesLink) {
+														selectedRulesURL = url
+														rulesTitle = "7v7 4-8 Rules"
+														showingPDFView = true
+													}
+												}
 											}
 										}
 										
@@ -270,7 +285,8 @@ struct SevenVSevenView: View {
 				.fontWeight(.semibold)
 				.foregroundColor(fg)
 				.multilineTextAlignment(.center)
-				.lineLimit(nil)
+				.fixedSize(horizontal: false, vertical: true) // Allow vertical expansion
+				.lineLimit(2) // Limit to 2 lines
 				.minimumScaleFactor(0.7)
 		}
 		.frame(width: 120, height: 130)

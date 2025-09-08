@@ -10,6 +10,7 @@ import WebKit
 
 struct GirlsFlagView: View {
 	@Environment(\.openURL) var openURL
+	
 	@State private var showingWebView = false
 	@State private var webViewTitle = ""
 	@State private var webViewURL: URL? = nil
@@ -18,12 +19,11 @@ struct GirlsFlagView: View {
 	@State private var selectedRulesURL: URL? = nil
 	@State private var showingPDFView = false
 	@State private var rulesTitle: String = "League Rules"
-
-	private let scheduleURLs = [
-		//"K-3": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=flag&division=K3",
-		"3-5th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=4-5th",
-		"6-8th": "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=6-8th"
-	]
+	
+	// Use the shared stores
+	@EnvironmentObject private var rulesStore: LeagueRulesStore
+	@EnvironmentObject private var scheduleStore: ScheduleStore
+	
 	@Binding var selectedTab: Int
 	
 	// For preview purposes
@@ -60,7 +60,6 @@ struct GirlsFlagView: View {
 									socialButton(image: "icon_Facebook", url: "https://www.facebook.com/Huntley-Red-Raiders-Youth-Football-League-112134028046472", label: "Facebook")
 									socialButton(image: "icon_Instagram", url: "https://www.instagram.com/hyf_redraiders/", label: "Instagram")
 									socialButton(image: "icon_X", url: "https://twitter.com/huntleyyouthrr", label: "X")
-									//socialButton(image: "icon_YouTube", url: "https://www.huntleyyouthfootball.org/home", label: "Youtube")
 									socialButton(image: "icon_Website", url: "https://www.huntleyyouthfootball.org/home", label: "HYF Red Raiders")
 								}
 								.padding(.vertical, 4)
@@ -81,49 +80,81 @@ struct GirlsFlagView: View {
 										Button(action: {
 											showingCalendarActionSheet = true
 										}) {
-											mainButtonView(image: "icon_Calendar", label: "Girl's Flag Schedules", bg: Color.white.opacity(1.0), fg: .black)
+											mainButtonView(image: "icon_Calendar", label: "Girl's Flag \nSchedules", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
 											/* Level is not active for 2025 Season
-											Button("K-3") {
-												webViewTitle = "K-3 Schedule"
-												webViewURL = URL(string: scheduleURLs["K-3"] ?? "")
-												showingWebView = true
-											}
+											 Button("K-3") {
+											 webViewTitle = "K-3 Schedule"
+											 webViewURL = URL(string: scheduleStore.girlsFlagK3Link)
+											 showingWebView = true
+											 }
 											 */
 											Button("3-5th") {
 												webViewTitle = "3-5th Schedule"
-												webViewURL = URL(string: scheduleURLs["3-5th"] ?? "")
+												webViewURL = URL(string: scheduleStore.girlsFlag3To5Link)
 												showingWebView = true
 											}
 											Button("6-8th") {
 												webViewTitle = "6-8th Schedule"
-												webViewURL = URL(string: scheduleURLs["6-8th"] ?? "")
+												webViewURL = URL(string: scheduleStore.girlsFlag6To8Link)
 												showingWebView = true
 											}
 										}
 										
-										// League Rules Button
-										NavigationLink {
-											PDFPreviewView(url: URL(string: "https://www.tcyfl.net/grabit.php?file=TCYFL_Girls_Fall_Flag_Rules_2024.pdf")!, title: "Girl's Flag League Rules")
-										} label: {
-											VStack(spacing: 8) {
-												Image("icon_Rules")
-													.resizable()
-													.frame(width: 70, height: 70)
-												Text("Girl's Flag League Rules")
-													.font(.headline)
-													.fontWeight(.semibold)
-													.foregroundColor(.black)
-													.multilineTextAlignment(.center)
-													.lineLimit(nil)
-													.minimumScaleFactor(0.7)
+										// League Rules Button - Using shared store
+										if rulesStore.isLoading {
+											ProgressView()
+												.tint(.white)
+												.frame(width: 120, height: 130)
+												.background(Color.white.opacity(1.0))
+												.cornerRadius(16)
+										} else if rulesStore.loadError {
+											Button(action: {
+												rulesStore.fetchAllRules()
+											}) {
+												VStack(spacing: 8) {
+													Image("icon_Rules")
+														.resizable()
+														.frame(width: 70, height: 70)
+													Text("Retry Loading")
+														.font(.headline)
+														.fontWeight(.semibold)
+														.foregroundColor(.black)
+												}
+												.frame(width: 120, height: 130)
+												.background(Color.white.opacity(1.0))
+												.cornerRadius(16)
+												.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
 											}
-											.frame(width: 120, height: 130)
-											.background(Color.white.opacity(1.0))
-											.cornerRadius(16)
-											.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
+										} else {
+											NavigationLink {
+												if let url = URL(string: rulesStore.girlsFlagRulesLink) {
+													PDFPreviewView(url: url, title: "Girl's Flag \nRules")
+												} else {
+													Text("Invalid URL for Girl's Flag Rules")
+														.foregroundColor(.red)
+												}
+											} label: {
+												VStack(spacing: 8) {
+													Image("icon_Rules")
+														.resizable()
+														.frame(width: 70, height: 70)
+													Text("Girl's Flag Rules")
+														.font(.headline)
+														.fontWeight(.semibold)
+														.foregroundColor(.black)
+														.multilineTextAlignment(.center)
+														.lineLimit(nil)
+														.minimumScaleFactor(0.7)
+												}
+												.frame(width: 120, height: 130)
+												.background(Color.white.opacity(1.0))
+												.cornerRadius(16)
+												.shadow(color: Color.black.opacity(0.10), radius: 4, y: 2)
+											}
 										}
+										
 										// First invisible placeholder button
 										Button(action: {}) {
 											VStack(spacing: 8) {
@@ -155,9 +186,6 @@ struct GirlsFlagView: View {
 								.padding(.horizontal, 20)
 								.padding(.top, 20)
 								.padding(.bottom, geometry.safeAreaInsets.bottom)
-								
-								
-								
 								
 								Spacer(minLength: 20) // Ensure some space at bottom
 							}
@@ -235,7 +263,8 @@ struct GirlsFlagView: View {
 				.fontWeight(.semibold)
 				.foregroundColor(fg)
 				.multilineTextAlignment(.center)
-				.lineLimit(nil)
+				.fixedSize(horizontal: false, vertical: true) // Allow vertical expansion
+				.lineLimit(2) // Limit to 2 lines
 				.minimumScaleFactor(0.7)
 		}
 		.frame(width: 120, height: 130)

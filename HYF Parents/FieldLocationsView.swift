@@ -15,7 +15,8 @@ struct IdentifiablePlace: Identifiable {
 }
 
 struct FieldLocationsView: View {
-	@StateObject private var fieldService = FieldService()
+	// Use the shared singleton instead of creating a new instance
+	@EnvironmentObject private var fieldService: FieldService
 	@State private var searchText = ""
 	@State private var selectedField: Field?
 	
@@ -44,12 +45,7 @@ struct FieldLocationsView: View {
 				}
 			}
 		}
-		.onAppear {
-			// Call loadFields when the view appears if fields are empty
-			if fieldService.fields.isEmpty {
-				fieldService.loadFields()
-			}
-		}
+		.navigationTitle("Field Locations")
 		.sheet(item: $selectedField) { field in
 			NavigationStack {
 				FieldDetailView(field: field)
@@ -86,6 +82,13 @@ struct FieldRowView: View {
 			Text(field.address)
 				.font(.subheadline)
 				.foregroundColor(.gray)
+			
+			if field.is_home_field {
+				Text("Home Field")
+					.font(.caption)
+					.foregroundColor(.red)
+					.padding(.top, 2)
+			}
 		}
 		.padding(.vertical, 4)
 	}
@@ -161,6 +164,13 @@ struct FieldDetailView: View {
 				
 				Text(field.address)
 					.font(.body)
+				
+				if field.is_home_field {
+					Text("Home Field")
+						.font(.headline)
+						.foregroundColor(.red)
+						.padding(.top, 2)
+				}
 				
 				Divider()
 				
@@ -275,5 +285,3 @@ struct FieldDetailView: View {
 		mapItem.openInMaps()
 	}
 }
-
-

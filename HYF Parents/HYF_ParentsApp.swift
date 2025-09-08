@@ -8,10 +8,22 @@
 import SwiftUI
 
 @main
-struct HYF_ParentsApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
-    }
+struct HYFParentsApp: App {
+	// Initialize all shared stores at app launch
+	@StateObject private var rulesStore = LeagueRulesStore.shared
+	@StateObject private var scheduleStore = ScheduleStore.shared
+	@StateObject private var fieldService = FieldService.shared
+	
+	var body: some Scene {
+		WindowGroup {
+			ContentView()
+				.environmentObject(rulesStore)
+				.environmentObject(scheduleStore)
+				.environmentObject(fieldService)
+				.onAppear {
+					// Trigger field data loading when app appears
+					fieldService.loadFields()
+				}
+		}
+	}
 }
