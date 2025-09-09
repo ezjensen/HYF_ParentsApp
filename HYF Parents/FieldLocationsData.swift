@@ -17,6 +17,30 @@ struct Field: Identifiable, Codable {
 	var address: String
 	var is_home_field: Bool
 	var notes: String?
+	
+	enum CodingKeys: String, CodingKey {
+		case id
+		case name = "FieldName"  //MUST match Supabase column names
+		case address = "FieldAddress"
+		case is_home_field = "isHomeField"
+		case notes = "FieldNotes"
+	}
+}
+
+// Custom CodingKey implementation for key decoding strategy
+private struct CustomCodingKey: CodingKey {
+	var stringValue: String
+	var intValue: Int?
+	
+	init?(stringValue: String) {
+		self.stringValue = stringValue
+		self.intValue = nil
+	}
+	
+	init?(intValue: Int) {
+		self.stringValue = "\(intValue)"
+		self.intValue = intValue
+	}
 }
 
 // Service to fetch fields from Supabase as a shared singleton
@@ -42,7 +66,7 @@ class FieldService: ObservableObject {
 				print("FieldService: Timeout reached, using fallback data")
 				self?.isLoading = false
 				self?.isDataFromSupabase = false
-				self?.fields = FieldLocationsData.fields
+				self?.fields = FieldLocationsData.fields.sorted(by: { $0.name < $1.name })
 			}
 		}
 		
@@ -65,30 +89,43 @@ class FieldService: ObservableObject {
 				
 				do {
 					let decoder = JSONDecoder()
-					// Try to decode with custom keys if necessary
+					decoder.keyDecodingStrategy = .custom { keys in
+						let lastKey = keys.last!
+						
+						// Check if the last key is CodingKeys.name
+						if lastKey.stringValue == "name" {
+							// Return a key that matches "FieldName" in the JSON
+							return CustomCodingKey(stringValue: "FieldName")!
+						}
+						
+						// For all other keys, return the last key
+						return lastKey
+					}
+					
+					// Try to decode with custom decoder settings
 					let fields = try decoder.decode([Field].self, from: data)
 					
 					print("FieldService: Loaded \(fields.count) fields from Supabase")
 					self.isLoading = false
 					
 					if fields.isEmpty {
-						self.fields = FieldLocationsData.fields
+						self.fields = FieldLocationsData.fields.sorted(by: { $0.name < $1.name })
 						self.isDataFromSupabase = false
 					} else {
-						self.fields = fields
+						self.fields = fields.sorted(by: { $0.name < $1.name })
 						self.isDataFromSupabase = true
 					}
 				} catch {
 					print("FieldService: Error decoding fields: \(error)")
 					self.isLoading = false
 					self.isDataFromSupabase = false
-					self.fields = FieldLocationsData.fields
+					self.fields = FieldLocationsData.fields.sorted(by: { $0.name < $1.name })
 				}
 			} catch {
 				print("FieldService: Error fetching fields from Supabase: \(error)")
 				self.isLoading = false
 				self.isDataFromSupabase = false
-				self.fields = FieldLocationsData.fields
+				self.fields = FieldLocationsData.fields.sorted(by: { $0.name < $1.name })
 			}
 		}
 	}

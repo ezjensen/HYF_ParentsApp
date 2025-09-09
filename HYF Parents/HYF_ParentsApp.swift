@@ -21,8 +21,12 @@ struct HYFParentsApp: App {
 				.environmentObject(scheduleStore)
 				.environmentObject(fieldService)
 				.onAppear {
-					// Trigger field data loading when app appears
-					fieldService.loadFields()
+					// Call loadFields when the view appears if fields are empty
+					if fieldService.fields.isEmpty {
+						fieldService.loadFields()
+					}
+					// Also pre-fetch field locations for the WebView
+					getFieldLocations()
 				}
 		}
 	}

@@ -14,7 +14,10 @@ import Supabase
 func getFieldLocations() {
 	// Use the shared singleton to load fields
 	if FieldService.shared.fields.isEmpty {
+		print("Pre-fetching field locations for WebView")
 		FieldService.shared.loadFields()
+	} else {
+		print("Field locations already loaded: \(FieldService.shared.fields.count) fields available")
 	}
 }
 
@@ -72,9 +75,4 @@ func sendHardcodedFieldsToWebView(_ webView: WKWebView) {
 			print("Hardcoded fields data sent successfully")
 		}
 	}
-}
-
-// Function to call when preparing field locations
-func prepareFieldLocations() {
-	getFieldLocations()
 }

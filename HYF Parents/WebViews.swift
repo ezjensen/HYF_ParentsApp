@@ -135,10 +135,9 @@ struct EnhancedWebView: UIViewRepresentable {
 		init(_ parent: EnhancedWebView) {
 			self.parent = parent
 			super.init()
-			// No need to store fields locally - use FieldService.shared directly
 		}
 		
-		// Handle messages from JavaScript
+		/// Handle messages from JavaScript
 		func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
 			if message.name == "imageHandler" {
 				if let webView = message.webView {
@@ -156,66 +155,12 @@ struct EnhancedWebView: UIViewRepresentable {
 				}
 			} else if message.name == "fieldsHandler" {
 				if let webView = message.webView {
-					// Get fields from the shared service
-					let fields = FieldService.shared.fields.isEmpty ?
-					FieldLocationsData.fields : FieldService.shared.fields
-					
-					// Convert fields to JSON
-					do {
-						let encoder = JSONEncoder()
-						let fieldsData = try encoder.encode(fields)
-						if let fieldsJson = String(data: fieldsData, encoding: .utf8) {
-							// Send fields data to JavaScript, escape single quotes
-							let script = "receiveFieldsData('\(fieldsJson.replacingOccurrences(of: "'", with: "\\'"))');"
-							webView.evaluateJavaScript(script) { result, error in
-								if let error = error {
-									print("Error sending fields data: \(error)")
-									self.sendHardcodedFields(to: webView)
-								} else {
-									print("Fields data sent successfully")
-								}
-							}
-						}
-					} catch {
-						print("Error encoding fields: \(error.localizedDescription)")
-						sendHardcodedFields(to: webView)
-					}
+					// Call the function from getFieldLocations.swift
+					sendFieldsDataToWebView(webView)
 				}
 			}
 		}
 		
-		/*
-		
-		private func sendHardcodedFields(to webView: WKWebView) {
-			// Use the static fallback data for fields
-			let fieldsJSON = FieldLocationsData.fieldsJSON
-			
-			// Escape single quotes to prevent JavaScript errors
-			let escapedJSON = fieldsJSON.replacingOccurrences(of: "'", with: "\\'")
-			
-			let script = "receiveFieldsData('\(escapedJSON)');"
-			webView.evaluateJavaScript(script) { result, error in
-				if let error = error {
-					print("Error sending hardcoded fields data: \(error)")
-					
-					// Alternative approach if the first fails
-					let directScript = "fieldsData = \(fieldsJSON); checkDataAndRender();"
-					webView.evaluateJavaScript(directScript) { result, error in
-						if let error = error {
-							print("Error with direct field data assignment: \(error)")
-						} else {
-							print("Direct fields data assignment successful")
-						}
-					}
-				} else {
-					print("Hardcoded fields data sent successfully")
-				}
-			}
-		}
-		
-		 */
-		 
-		 
 		func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
 			// Check URL to determine which JavaScript to apply
 			if parent.url.absoluteString.contains("maps.php") {
