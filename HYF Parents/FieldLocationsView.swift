@@ -2,286 +2,342 @@
 //  FieldLocationsView.swift
 //  HYF Parents
 //
-//  Created by Eric Jensen on 8/8/25.
+//  Created by Eric Jensen on 7/18/25.
 //
 
 import SwiftUI
 import MapKit
 
-// Define IdentifiablePlace at the top level
-struct IdentifiablePlace: Identifiable {
-	let id: String
-	let coordinate: CLLocationCoordinate2D
-}
-
-struct FieldLocationsView: View {
-	// Use the shared singleton instead of creating a new instance
+// MARK: - Field Details List View
+struct FieldDetailsView: View {
+	@Environment(\.dismiss) private var dismiss
 	@EnvironmentObject private var fieldService: FieldService
-	@State private var searchText = ""
-	@State private var selectedField: Field?
+	@State private var isLoading = true
 	
 	var body: some View {
-		VStack {
-			// Search box with conditional red border
-			TextField("Search fields...", text: $searchText)
-				.padding()
-				.background(.ultraThinMaterial)
-				.cornerRadius(8)
-				.padding(.horizontal)
-				.foregroundColor(fieldService.isDataFromSupabase ? nil : .red)
-			
-			if fieldService.isLoading {
-				Spacer()
+		NavigationStack {
+			if isLoading {
 				ProgressView("Loading fields...")
-				Spacer()
+					.frame(maxWidth: .infinity, maxHeight: .infinity)
+			} else if fieldService.fields.isEmpty {
+				ContentUnavailableView(
+					"No Fields Available",
+					systemImage: "mappin.slash",
+					description: Text("Field locations could not be loaded.")
+				)
 			} else {
-				List(filteredFields) { field in
-					Button {
-						selectedField = field
-					} label: {
-						FieldRowView(field: field)
+				List(fieldService.fields) { field in
+					NavigationLink(destination: FieldLocationsView(field: field)) {
+						VStack(alignment: .leading, spacing: 8) {
+							HStack {
+								Text(field.name)
+									.font(.headline)
+									.fontWeight(.semibold)
+								
+								Spacer()
+								
+								if field.is_home_field {
+									Image("HYF_H")
+										.resizable()
+										.aspectRatio(contentMode: .fit)
+										.frame(width: 20, height: 20)
+										.foregroundColor(.blue)
+								}
+							}
+							
+							Text(field.address)
+								.font(.subheadline)
+								.foregroundColor(.secondary)
+								.lineLimit(2)
+						}
+						.padding(.vertical, 4)
 					}
-					.buttonStyle(PlainButtonStyle())
 				}
 			}
 		}
 		.navigationTitle("Field Locations")
-		.sheet(item: $selectedField) { field in
-			NavigationStack {
-				FieldDetailView(field: field)
-					.navigationBarItems(trailing: Button("Done") {
-						selectedField = nil
-					})
-					.navigationBarTitle("Field Details", displayMode: .inline)
+		.navigationBarTitleDisplayMode(.inline)
+		.toolbar {
+			ToolbarItem(placement: .navigationBarTrailing) {
+				Button("Done") {
+					dismiss()
+				}
 			}
-			.accentColor(.red)
+		}
+		.task {
+			await fieldService.loadFields()
+			isLoading = false
 		}
 	}
+}
+
+struct FieldLocationsView: View {
+	let field: Field
+	@State private var cameraPosition: MapCameraPosition
 	
-	var filteredFields: [Field] {
-		if searchText.isEmpty {
-			return fieldService.fields
+	init(field: Field) {
+		self.field = field
+		self._cameraPosition = State(initialValue: MapCameraPosition.region(
+			MKCoordinateRegion(
+				center: CLLocationCoordinate2D(latitude: 42.1667, longitude: -88.3087),
+				span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+			)
+		))
+	}
+	
+	var body: some View {
+		if #available(iOS 17.0, *) {
+			modernView
 		} else {
-			return fieldService.fields.filter { field in
-				field.name.localizedCaseInsensitiveContains(searchText) ||
-				field.address.localizedCaseInsensitiveContains(searchText)
-			}
+			legacyView
 		}
 	}
-}
-
-// MARK: - FieldRowView
-struct FieldRowView: View {
-	let field: Field
 	
-	var body: some View {
-		VStack(alignment: .leading, spacing: 4) {
-			Text(field.name)
-				.font(.headline)
-			
-			Text(field.address)
-				.font(.subheadline)
-				.foregroundColor(.gray)
-			
-			if field.is_home_field {
-				Text("Home Field")
-					.font(.caption)
-					.foregroundColor(.red)
-					.padding(.top, 2)
-			}
-		}
-		.padding(.vertical, 4)
-	}
-}
-
-// MARK: - FieldDetailView
-struct FieldDetailView: View {
-	let field: Field
-	@State private var position: MapCameraPosition = .automatic
-	@State private var locationAnnotation: IdentifiablePlace?
-	@State private var isLoadingLocation = true
-	@State private var geocodingError = false
-	@State private var viewId = UUID()
-	@State private var isShowingShareSheet = false
-	
-	var body: some View {
-		VStack {
-			ZStack {
-				// Using the new Map initializer syntax for iOS 17+
-				if #available(iOS 17.0, *) {
-					Map(position: $position) {
-						if let location = locationAnnotation {
-							Marker(field.name, coordinate: location.coordinate)
+	@available(iOS 17.0, *)
+	private var modernView: some View {
+		ScrollView {
+			VStack(alignment: .leading, spacing: 24) {
+				// Address Section with Home Field indicator on the same line
+				VStack(alignment: .leading, spacing: 16) {
+					HStack {
+						HStack(spacing: 10) {
+							Image(systemName: "location")
+								.symbolRenderingMode(.hierarchical)
+								.foregroundStyle(.blue.gradient)
+							Text("Address")
+								.font(.headline)
+								.fontWeight(.semibold)
+						}
+						
+						Spacer()
+						
+						if field.is_home_field {
+							HStack(spacing: 8) {
+								Image("HYF_H")
+									.resizable()
+									.aspectRatio(contentMode: .fit)
+									.frame(width: 18, height: 18)
+									.foregroundColor(.blue)
+								Text("Home Field")
+									.font(.caption)
+									.fontWeight(.semibold)
+									.foregroundStyle(.blue)
+							}
+							.padding(.horizontal, 12)
+							.padding(.vertical, 6)
+							.background(.ultraThinMaterial, in: .capsule)
+							.overlay(
+								Capsule()
+									.strokeBorder(.blue.opacity(0.3), lineWidth: 1)
+							)
 						}
 					}
-					.id(viewId)
-					.frame(height: 300)
-				} else {
-					// Fallback for iOS 16 and earlier
-					if let location = locationAnnotation {
-						Map(coordinateRegion: .constant(MKCoordinateRegion(
-							center: location.coordinate,
-							span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-						)))
-						.id(viewId)
-						.frame(height: 300)
-					} else {
-						Color.gray.opacity(0.2)
-							.frame(height: 300)
-					}
-				}
-				
-				if isLoadingLocation {
-					Color.black.opacity(0.1)
-					ProgressView()
-				}
-				
-				if geocodingError {
-					Text("Could not find location on map")
-						.padding()
-						.background(Color.black.opacity(0.7))
-						.foregroundColor(.white)
-						.cornerRadius(8)
-				}
-			}
-			
-			VStack(alignment: .leading, spacing: 12) {
-				HStack {
-					Text(field.name)
-						.font(.title)
-						.fontWeight(.bold)
 					
-					Spacer()
-					
-					Button(action: {
-						isShowingShareSheet = true
-					}) {
-						Image(systemName: "square.and.arrow.up")
-							.foregroundColor(.red)
-							.font(.title2)
-					}
-				}
-				
-				Text(field.address)
-					.font(.body)
-				
-				if field.is_home_field {
-					Text("Home Field")
-						.font(.headline)
-						.foregroundColor(.red)
-						.padding(.top, 2)
-				}
-				
-				Divider()
-				
-				if let notes = field.notes, !notes.isEmpty {
-					Text("Notes:")
-						.font(.headline)
-					
-					Text(notes)
+					Text(field.address)
 						.font(.body)
+						.foregroundStyle(.secondary)
+						.textSelection(.enabled)
+						.padding(.leading, 32)
+				}
+				.padding(20)
+				.background(.thickMaterial, in: .rect(cornerRadius: 20))
+				.overlay(
+					RoundedRectangle(cornerRadius: 20)
+						.strokeBorder(.quaternary.opacity(0.5), lineWidth: 0.5)
+				)
+				.padding(.horizontal, 20)
+				
+				// Map View
+				VStack(spacing: 16) {
+					HStack(spacing: 10) {
+						Image(systemName: "map")
+							.symbolRenderingMode(.hierarchical)
+							.foregroundStyle(.green.gradient)
+						Text("Field Location")
+							.font(.headline)
+							.fontWeight(.semibold)
+					}
+					.frame(maxWidth: .infinity, alignment: .leading)
+					
+					Map(position: $cameraPosition) {
+						Annotation(field.name, coordinate: CLLocationCoordinate2D(latitude: 42.1667, longitude: -88.3087)) {
+							ZStack {
+								Circle()
+									.fill(.red.gradient)
+									.frame(width: 32, height: 32)
+								Image(systemName: "mappin")
+									.foregroundStyle(.white)
+									.font(.system(size: 16, weight: .bold))
+							}
+						}
+					}
+					.frame(minHeight: 250)
+					.clipShape(.rect(cornerRadius: 20))
+					.overlay(
+						RoundedRectangle(cornerRadius: 20)
+							.strokeBorder(.quaternary.opacity(0.3), lineWidth: 0.5)
+					)
+				}
+				.padding(.horizontal, 20)
+				
+				// Directions Button
+				Button(action: openDirections) {
+					HStack(spacing: 12) {
+						Image(systemName: "arrow.triangle.turn.up.right.diamond")
+							.font(.system(size: 18, weight: .medium))
+						Text("Get Directions")
+							.font(.headline)
+							.fontWeight(.semibold)
+					}
+					.frame(maxWidth: .infinity)
+					.padding(.vertical, 18)
+					.background(.blue.gradient, in: .capsule)
+					.foregroundStyle(.white)
+					.shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
+				}
+				.buttonStyle(.plain)
+				.padding(.horizontal, 20)
+				
+				// Notes Section
+				if let notes = field.notes, !notes.isEmpty {
+					VStack(alignment: .leading, spacing: 16) {
+						HStack(spacing: 10) {
+							Image(systemName: "note.text")
+								.symbolRenderingMode(.hierarchical)
+								.foregroundStyle(.orange.gradient)
+							Text("Notes")
+								.font(.headline)
+								.fontWeight(.semibold)
+						}
+						
+						Text(notes)
+							.font(.body)
+							.foregroundStyle(.secondary)
+							.textSelection(.enabled)
+							.lineLimit(nil)
+							.padding(.leading, 32)
+					}
+					.padding(20)
+					.background(.thickMaterial, in: .rect(cornerRadius: 20))
+					.overlay(
+						RoundedRectangle(cornerRadius: 20)
+							.strokeBorder(.quaternary.opacity(0.5), lineWidth: 0.5)
+					)
+					.padding(.horizontal, 20)
+				}
+				
+				Spacer(minLength: 40)
+			}
+			.padding(.top, 20)
+		}
+		.navigationTitle(field.name)
+		.navigationBarTitleDisplayMode(.inline)
+		.toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+		.toolbarBackground(.visible, for: .navigationBar)
+		.background(.regularMaterial)
+	}
+	
+	private var legacyView: some View {
+		ScrollView {
+			VStack(alignment: .leading, spacing: 16) {
+				// Address Section with Home Field indicator
+				VStack(alignment: .leading, spacing: 8) {
+					HStack {
+						Label("Address", systemImage: "location")
+							.font(.headline)
+						
+						Spacer()
+						
+						if field.is_home_field {
+							HStack(spacing: 6) {
+								Image("HYF_H")
+									.resizable()
+									.aspectRatio(contentMode: .fit)
+									.frame(width: 16, height: 16)
+									.foregroundColor(.blue)
+								Text("Home Field")
+									.font(.caption)
+									.foregroundColor(.blue)
+									.fontWeight(.medium)
+							}
+						}
+					}
+					
+					Text(field.address)
+						.font(.body)
+						.foregroundColor(.secondary)
+				}
+				
+				// Simple Map View for older iOS
+				RoundedRectangle(cornerRadius: 12)
+					.fill(Color.gray.opacity(0.2))
+					.frame(height: 200)
+					.overlay(
+						VStack {
+							Image(systemName: "mappin.circle.fill")
+								.font(.largeTitle)
+								.foregroundColor(.red)
+							Text("Map View")
+								.font(.caption)
+								.foregroundColor(.secondary)
+						}
+					)
+				
+				// Directions Button
+				Button(action: openDirections) {
+					HStack {
+						Image(systemName: "arrow.triangle.turn.up.right.diamond")
+						Text("Get Directions")
+					}
+					.frame(maxWidth: .infinity)
+					.padding()
+					.background(Color.blue)
+					.foregroundColor(.white)
+					.cornerRadius(12)
+				}
+				
+				// Notes Section
+				if let notes = field.notes, !notes.isEmpty {
+					VStack(alignment: .leading, spacing: 8) {
+						Label("Notes", systemImage: "note.text")
+							.font(.headline)
+						
+						Text(notes)
+							.font(.body)
+							.foregroundColor(.secondary)
+					}
 				}
 				
 				Spacer()
-				
-				Button(action: {
-					openInMaps()
-				}) {
-					Label("Directions", systemImage: "map")
-						.frame(maxWidth: .infinity)
-				}
-				.buttonStyle(.borderedProminent)
-				.tint(.red)
-				.disabled(locationAnnotation == nil)
 			}
 			.padding()
 		}
-		.onAppear {
-			// Manually start geocoding when view appears
-			geocodeAddress()
-		}
-		.sheet(isPresented: $isShowingShareSheet) {
-			ShareSheet(items: shareItems)
-		}
+		.navigationTitle(field.name)
+		.navigationBarTitleDisplayMode(.inline)
 	}
 	
-	var shareItems: [Any] {
-		// Create the content to share
-		let fieldInfo = """
-		Field: \(field.name)
-		Address: \(field.address)
-		\(field.notes != nil && !field.notes!.isEmpty ? "Notes: \(field.notes!)" : "")
-		"""
+	private func openDirections() {
+		let encodedAddress = field.address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
 		
-		// Create URL for Google Maps if available
-		var items: [Any] = [fieldInfo]
-		if let locationAnnotation = locationAnnotation {
-			let mapURL = "https://maps.google.com/maps?q=\(locationAnnotation.coordinate.latitude),\(locationAnnotation.coordinate.longitude)"
-			if let url = URL(string: mapURL) {
-				items.append(url)
+		// Try Apple Maps first
+		if let appleURL = URL(string: "http://maps.apple.com/?daddr=\(encodedAddress)") {
+			if UIApplication.shared.canOpenURL(appleURL) {
+				UIApplication.shared.open(appleURL)
+				return
 			}
 		}
 		
-		return items
-	}
-	
-	func geocodeAddress() {
-		// Reset state
-		isLoadingLocation = true
-		geocodingError = false
-		locationAnnotation = nil
-		viewId = UUID()
-		
-		print("Starting geocoding for: \(field.name) at \(field.address)")
-		
-		let geocoder = CLGeocoder()
-		geocoder.geocodeAddressString(field.address) { placemarks, error in
-			// Always update UI on main thread
-			DispatchQueue.main.async {
-				self.isLoadingLocation = false
-				
-				if let error = error {
-					print("Geocoding error for \(field.name): \(error.localizedDescription)")
-					self.geocodingError = true
-					return
-				}
-				
-				guard let location = placemarks?.first?.location else {
-					print("No location found for address: \(field.address)")
-					self.geocodingError = true
-					return
-				}
-				
-				let coordinate = location.coordinate
-				print("Successfully geocoded \(field.name): \(coordinate.latitude), \(coordinate.longitude)")
-				
-				// Create a unique annotation
-				self.locationAnnotation = IdentifiablePlace(
-					id: UUID().uuidString,
-					coordinate: coordinate
-				)
-				
-				// Update map position based on iOS version
-				if #available(iOS 17.0, *) {
-					self.position = .region(MKCoordinateRegion(
-						center: coordinate,
-						span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-					))
-				}
-				
-				// Force view update
-				self.viewId = UUID()
-			}
+		// Fallback to Google Maps
+		if let googleURL = URL(string: "https://maps.google.com/maps?daddr=\(encodedAddress)") {
+			UIApplication.shared.open(googleURL)
 		}
 	}
-	
-	func openInMaps() {
-		guard let locationAnnotation = locationAnnotation else { return }
-		
-		let coordinate = locationAnnotation.coordinate
-		let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
-		mapItem.name = field.name
-		
-		mapItem.openInMaps()
+}
+
+struct FieldLocationsView_Previews: PreviewProvider {
+	static var previews: some View {
+		NavigationView {
+			FieldLocationsView(field: Field(id: 1, name: "Preview Field", address: "123 Test St", is_home_field: true, notes: "Test notes"))
+		}
 	}
 }

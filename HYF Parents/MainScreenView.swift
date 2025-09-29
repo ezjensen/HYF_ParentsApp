@@ -29,7 +29,7 @@ struct MainScreenView: View {
 	]
 	
 	var body: some View {
-		NavigationView {
+		NavigationStack {
 			ZStack {
 				Color.black.ignoresSafeArea()
 				
@@ -49,7 +49,7 @@ struct MainScreenView: View {
 									//socialButton(image: "icon_YouTube", url: "https://www.huntleyyouthfootball.org/home", label: "Youtube")
 									socialButton(image: "icon_Website", url: "https://www.huntleyyouthfootball.org/home", label: "HYF Red Raiders")
 								}
-							
+								
 								.padding(.vertical, 4)
 								.padding(.horizontal, 8)
 								.background(.ultraThinMaterial.opacity(0.7))
@@ -77,17 +77,6 @@ struct MainScreenView: View {
 										}) {
 											mainButtonView(image: "icon_Maps", label: "Field\nLocations", bg: Color.white.opacity(1.0), fg: .black)
 										}
-										
-										/*
-										 // Weather Alerts button
-										 Button(action: {
-										 selectedTab = 4
-										 }) {
-										 mainButtonView(image: "icon_WeatherAlert", label: "Weather\nAlerts", bg: Color.white.opacity(1.0), fg: .black)
-										 }
-										 .buttonStyle(.plain)
-										 .accessibilityLabel("Weather Alerts")
-										 */
 										
 										// Registration button
 										Button(action: {
@@ -134,24 +123,11 @@ struct MainScreenView: View {
 			.sheet(isPresented: $showImportantDates) {
 				webViewSheet(title: "Important Dates", url: URL(string: "https://www.huntleyyouthfootball.org/page/show/6967331-important-dates")!)
 			}
-			// In your MainScreenView.swift file, modify the .sheet for showFieldMaps:
 			
 			.sheet(isPresented: $showFieldMaps) {
-				NavigationStack {
-					FieldLocationsView()
-						.navigationTitle("Field Locations")
-						.navigationBarTitleDisplayMode(.inline)
-						.toolbar {
-							ToolbarItem(placement: .topBarTrailing) {
-								Button("Done") {
-									showFieldMaps = false
-								}
-							}
-						}
-				}
-				.accentColor(.red)
+				FieldDetailsView()
 			}
-			 
+			
 			.sheet(isPresented: $showRegistration) {
 				webViewSheet(title: "Registration", url: URL(string: "https://www.huntleyyouthfootball.org/page/show/6967329-registration")!)
 			}
@@ -166,22 +142,7 @@ struct MainScreenView: View {
 			}
 			// Add this sheet for webViewURL
 			.sheet(isPresented: $showingWebView) {
-				if webViewTitle == "Field Locations" {
-					// Use a standard NavigationStack instead of NavigationView
-					NavigationStack {
-						FieldLocationsView()
-							.navigationTitle("Field Locations")
-							.navigationBarTitleDisplayMode(.inline)
-							.toolbar {
-								ToolbarItem(placement: .topBarTrailing) {
-									Button("Done") {
-										showingWebView = false
-									}
-								}
-							}
-					}
-					.accentColor(.red)
-				} else if let url = webViewURL {
+				if let url = webViewURL {
 					webViewSheet(title: webViewTitle, url: url)
 				}
 			}
@@ -191,31 +152,35 @@ struct MainScreenView: View {
 				let _ = supabase // This ensures the Supabase client is initialized
 			}
 		}
-		.navigationViewStyle(StackNavigationViewStyle()) // Ensure consistent navigation style
 	}
 	
 	// MARK: - Helper to create WebView sheet
 	private func webViewSheet(title: String, url: URL) -> some View {
-		NavigationView {
+		NavigationStack {
 			WebView(url: url)
 				.navigationBarTitle(title, displayMode: .inline)
-				.navigationBarItems(trailing: Button("Done") {
-					// Close the appropriate sheet based on title
-					switch title {
-						case "Important Dates":
-							showImportantDates = false
-						case "Registration":
-							showRegistration = false
-						case "Spirit Store":
-							showSpiritStore = false
-						case "TCYFL":
-							showTCYFL = false
-						case "Coaches Corner":
-							showCoachesCorner = false
-						default:
-							showingWebView = false
+				.navigationBarTitleDisplayMode(.inline)
+				.toolbar {
+					ToolbarItem(placement: .navigationBarTrailing) {
+						Button("Done") {
+							// Close the appropriate sheet based on title
+							switch title {
+								case "Important Dates":
+									showImportantDates = false
+								case "Registration":
+									showRegistration = false
+								case "Spirit Store":
+									showSpiritStore = false
+								case "TCYFL":
+									showTCYFL = false
+								case "Coaches Corner":
+									showCoachesCorner = false
+								default:
+									showingWebView = false
+							}
+						}
 					}
-				})
+				}
 		}
 		.accentColor(.red)
 	}
