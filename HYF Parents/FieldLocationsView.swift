@@ -86,15 +86,6 @@ struct FieldLocationsView: View {
 	}
 	
 	var body: some View {
-		if #available(iOS 17.0, *) {
-			modernView
-		} else {
-			legacyView
-		}
-	}
-	
-	@available(iOS 17.0, *)
-	private var modernView: some View {
 		ScrollView {
 			VStack(alignment: .leading, spacing: 24) {
 				// Address Section with Home Field indicator on the same line
@@ -237,85 +228,6 @@ struct FieldLocationsView: View {
 		.background(.regularMaterial)
 	}
 	
-	private var legacyView: some View {
-		ScrollView {
-			VStack(alignment: .leading, spacing: 16) {
-				// Address Section with Home Field indicator
-				VStack(alignment: .leading, spacing: 8) {
-					HStack {
-						Label("Address", systemImage: "location")
-							.font(.headline)
-						
-						Spacer()
-						
-						if field.is_home_field {
-							HStack(spacing: 6) {
-								Image("HYF_H")
-									.resizable()
-									.aspectRatio(contentMode: .fit)
-									.frame(width: 16, height: 16)
-									.foregroundColor(.blue)
-								Text("Home Field")
-									.font(.caption)
-									.foregroundColor(.blue)
-									.fontWeight(.medium)
-							}
-						}
-					}
-					
-					Text(field.address)
-						.font(.body)
-						.foregroundColor(.secondary)
-				}
-				
-				// Simple Map View for older iOS
-				RoundedRectangle(cornerRadius: 12)
-					.fill(Color.gray.opacity(0.2))
-					.frame(height: 200)
-					.overlay(
-						VStack {
-							Image(systemName: "mappin.circle.fill")
-								.font(.largeTitle)
-								.foregroundColor(.red)
-							Text("Map View")
-								.font(.caption)
-								.foregroundColor(.secondary)
-						}
-					)
-				
-				// Directions Button
-				Button(action: openDirections) {
-					HStack {
-						Image(systemName: "arrow.triangle.turn.up.right.diamond")
-						Text("Get Directions")
-					}
-					.frame(maxWidth: .infinity)
-					.padding()
-					.background(Color.blue)
-					.foregroundColor(.white)
-					.cornerRadius(12)
-				}
-				
-				// Notes Section
-				if let notes = field.notes, !notes.isEmpty {
-					VStack(alignment: .leading, spacing: 8) {
-						Label("Notes", systemImage: "note.text")
-							.font(.headline)
-						
-						Text(notes)
-							.font(.body)
-							.foregroundColor(.secondary)
-					}
-				}
-				
-				Spacer()
-			}
-			.padding()
-		}
-		.navigationTitle(field.name)
-		.navigationBarTitleDisplayMode(.inline)
-	}
-	
 	private func openDirections() {
 		let encodedAddress = field.address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
 		
@@ -334,10 +246,8 @@ struct FieldLocationsView: View {
 	}
 }
 
-struct FieldLocationsView_Previews: PreviewProvider {
-	static var previews: some View {
-		NavigationView {
-			FieldLocationsView(field: Field(id: 1, name: "Preview Field", address: "123 Test St", is_home_field: true, notes: "Test notes"))
-		}
+#Preview {
+	NavigationStack {
+		FieldLocationsView(field: Field(id: 1, name: "Preview Field", address: "123 Test St", is_home_field: true, notes: "Test notes"))
 	}
 }

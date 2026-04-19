@@ -6,63 +6,54 @@
 //
 
 import SwiftUI
-import WebKit
-import PDFKit
-import MessageUI
 
 // MARK: Main ContentView with TabView
 struct ContentView: View {
 	@State private var selectedTab = 0
+	@State private var previousTab = 0
+	@State private var showingAbout = false
+	
+	private var aboutMessage: String {
+		let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+		let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
+		return "This app was made for Huntley Youth Football and for the Player Parents to put all resources in their hands.\n\nVersion: \(appVersion) (\(buildNumber))"
+	}
 	
 	var body: some View {
-		NavigationView {
-			TabView(selection: $selectedTab) {
+		TabView(selection: $selectedTab) {
+			Tab("Home", systemImage: "house.fill", value: 0) {
 				MainScreenView(selectedTab: $selectedTab)
-					.tabItem {
-						Image(systemName: "house.fill")
-						Text("Home")
-					}
-					.tag(0)
-				TackleView(selectedTab: $selectedTab)
-					.tabItem {
-						Image(systemName: "sportscourt")
-						Text("Tackle")
-					}
-					.tag(1)
-				SevenVSevenView(selectedTab: $selectedTab)
-					.tabItem {
-						Image(systemName: "person.3.fill")
-						Text("7v7")
-					}
-					.tag(2)
-				GirlsFlagView(selectedTab: $selectedTab)
-					.tabItem {
-						Image(systemName: "flag.fill")
-						Text("Girls Flag")
-					}
-					.tag(3)
-				WeatherAlertsView(selectedTab: $selectedTab)
-					.tabItem {
-						Image(systemName: "cloud.bolt.fill")
-						Text("Weather")
-					}
-					.tag(4)
-				SupportView(selectedTab: $selectedTab)
-					.tabItem {
-						Image(systemName: "questionmark.circle.fill")
-						Text("Support")
-					}
-					.tag(5)
 			}
-			.accentColor(.red)
-			.onAppear {
-				let appearance = UITabBarAppearance()
-				appearance.configureWithOpaqueBackground()
-				appearance.backgroundColor = UIColor.systemGray6
-				UITabBar.appearance().standardAppearance = appearance
-				if #available(iOS 15.0, *) {
-					UITabBar.appearance().scrollEdgeAppearance = appearance
-				}
+			Tab("Tackle", systemImage: "sportscourt", value: 1) {
+				TackleView(selectedTab: $selectedTab)
+			}
+			Tab("7v7", systemImage: "person.3.fill", value: 2) {
+				SevenVSevenView(selectedTab: $selectedTab)
+			}
+			Tab("Girls Flag", systemImage: "flag.fill", value: 3) {
+				GirlsFlagView(selectedTab: $selectedTab)
+			}
+			Tab("Weather", systemImage: "cloud.bolt.fill", value: 4) {
+				WeatherAlertsView(selectedTab: $selectedTab)
+			}
+			Tab("About", systemImage: "ellipsis.circle", value: 5) {
+				Color.black.ignoresSafeArea()
+					.onAppear {
+						showingAbout = true
+					}
+					.alert("About HYF Parents", isPresented: $showingAbout) {
+						Button("OK", role: .cancel) {
+							selectedTab = previousTab
+						}
+					} message: {
+						Text(aboutMessage)
+					}
+			}
+		}
+		.tint(.red)
+		.onChange(of: selectedTab) { oldValue, newValue in
+			if newValue != 5 {
+				previousTab = newValue
 			}
 		}
 	}

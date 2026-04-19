@@ -48,7 +48,7 @@ struct CoachResourcesView: View {
 	]
 	
 	var body: some View {
-		NavigationView {
+		NavigationStack {
 			ZStack {
 				Color.black.ignoresSafeArea()
 				
@@ -178,13 +178,18 @@ struct CoachResourcesView: View {
 							}
 						}
 					}
-					.ignoresSafeArea(edges: .top)
+				}
+				.ignoresSafeArea(edges: .top)
+			}
+			.navigationTitle("Coach Resources")
+			.navigationBarTitleDisplayMode(.inline)
+			.toolbar {
+				ToolbarItem(placement: .topBarTrailing) {
+					Button("Done") {
+						dismiss()
+					}
 				}
 			}
-			.navigationBarTitle("Coach Resources", displayMode: .inline)
-			.navigationBarItems(trailing: Button("Done") {
-				dismiss()
-			})
 			.sheet(isPresented: $showingWebView) {
 				if let url = webViewURL {
 					webViewSheet(title: webViewTitle, url: url)
@@ -211,8 +216,7 @@ struct CoachResourcesView: View {
 				)
 			}
 		}
-		.navigationViewStyle(StackNavigationViewStyle())
-		.accentColor(.red)
+		.tint(.red)
 		.onAppear {
 			fetchSafetyResources()
 		}
@@ -254,7 +258,7 @@ struct CoachResourcesView: View {
 	
 	// MARK: - Safety Resources List View
 	private func safetyResourcesListView() -> some View {
-		NavigationView {
+		NavigationStack {
 			ZStack {
 				if isLoading {
 					ProgressView("Loading resources...")
@@ -278,12 +282,14 @@ struct CoachResourcesView: View {
 									} else if resource.url.hasSuffix(".docx") || resource.url.hasSuffix(".doc") {
 										if let url = URL(string: resource.url) {
 											StandardWebView(url: url)
-												.navigationBarTitle(resource.title, displayMode: .inline)
+												.navigationTitle(resource.title)
+												.navigationBarTitleDisplayMode(.inline)
 										}
 									} else {
 										if let url = URL(string: resource.url) {
 											StandardWebView(url: url)
-												.navigationBarTitle(resource.title, displayMode: .inline)
+												.navigationTitle(resource.title)
+												.navigationBarTitleDisplayMode(.inline)
 										}
 									}
 								}) {
@@ -332,12 +338,17 @@ struct CoachResourcesView: View {
 					}
 				}
 			}
-			.navigationBarTitle("Safety Resources", displayMode: .inline)
-			.navigationBarItems(trailing: Button("Done") {
-				showingSafetyResourcesList = false
-			})
+			.navigationTitle("Safety Resources")
+			.navigationBarTitleDisplayMode(.inline)
+			.toolbar {
+				ToolbarItem(placement: .topBarTrailing) {
+					Button("Done") {
+						showingSafetyResourcesList = false
+					}
+				}
+			}
 		}
-		.accentColor(.red)
+		.tint(.red)
 		.onAppear {
 			if safetyResources.isEmpty {
 				fetchSafetyResources()
@@ -347,26 +358,36 @@ struct CoachResourcesView: View {
 	
 	// MARK: - Helper to create WebView sheet
 	private func webViewSheet(title: String, url: URL) -> some View {
-		NavigationView {
+		NavigationStack {
 			StandardWebView(url: url)
-				.navigationBarTitle(title, displayMode: .inline)
-				.navigationBarItems(trailing: Button("Done") {
-					showingWebView = false
-				})
+				.navigationTitle(title)
+				.navigationBarTitleDisplayMode(.inline)
+				.toolbar {
+					ToolbarItem(placement: .topBarTrailing) {
+						Button("Done") {
+							showingWebView = false
+						}
+					}
+				}
 		}
-		.accentColor(.red)
+		.tint(.red)
 	}
 	
 	// MARK: - Helper to create PDF View sheet
 	private func pdfViewSheet(title: String, url: URL) -> some View {
-		NavigationView {
+		NavigationStack {
 			PDFPreviewView(url: url, title: title)
-				.navigationBarTitle(title, displayMode: .inline)
-				.navigationBarItems(trailing: Button("Done") {
-					showingPDFView = false
-				})
+				.navigationTitle(title)
+				.navigationBarTitleDisplayMode(.inline)
+				.toolbar {
+					ToolbarItem(placement: .topBarTrailing) {
+						Button("Done") {
+							showingPDFView = false
+						}
+					}
+				}
 		}
-		.accentColor(.red)
+		.tint(.red)
 	}
 	
 	// MARK: - Button view component
@@ -438,8 +459,6 @@ struct CoachResourcesView: View {
 	}
 }
 
-struct CoachResourcesView_Previews: PreviewProvider {
-	static var previews: some View {
-		CoachResourcesView()
-	}
+#Preview {
+	CoachResourcesView()
 }
