@@ -20,6 +20,7 @@ struct SupportView: View {
 	@State private var shouldNavigateHome = false
 	@State private var isShowingShareSheet = false
 	@State private var shareItems: [Any] = []
+	@State private var showingAboutSheet = false
 	
 	// Add this to manage alert priorities
 	@State private var activeAlert: ActiveAlert? = nil
@@ -44,7 +45,7 @@ struct SupportView: View {
 	let feedbackTypes = ["General Feedback", "Feature Request", "Report a Bug"]
 	
 	var body: some View {
-		NavigationView {
+		NavigationStack {
 			ZStack {
 				Color.black.ignoresSafeArea()
 				
@@ -64,9 +65,9 @@ struct SupportView: View {
 							
 							VStack(spacing: 20) {
 								
-								// About button
+								// About button (alternative location) - switch to sheet
 								Button(action: {
-									activeAlert = .about
+									showingAboutSheet = true
 								}) {
 									HStack {
 										Image(systemName: "info.circle.fill")
@@ -209,7 +210,7 @@ struct SupportView: View {
 					.ignoresSafeArea(edges: .top)
 				}
 			}
-			.navigationBarHidden(true)
+			.toolbar(.hidden, for: .navigationBar)
 			.alert(item: $activeAlert) { alertType in
 				switch alertType {
 					case .about:
@@ -225,23 +226,20 @@ struct SupportView: View {
 					case .mailError:
 						return Alert(
 							title: Text("Cannot Send Email"),
-							message: Text("Your device is not configured to send emails. Please check your email settings and try again."),
+							message: Text("Your device is not configured to send email."),
 							dismissButton: .default(Text("OK"))
 						)
 					case .thankYou:
 						return Alert(
-							title: Text("Thank You!"),
-							message: Text("Your feedback has been submitted. We appreciate your input."),
-							dismissButton: .default(Text("Close")) {
-								shouldNavigateHome = true
-							}
+							title: Text("Thanks!"),
+							message: Text("Thank you for your feedback."),
+							dismissButton: .default(Text("OK"))
 						)
 				}
 			}
-			.onChange(of: shouldNavigateHome) {
-				if shouldNavigateHome {
-					selectedTab = 0
-					shouldNavigateHome = false
+			.sheet(isPresented: $showingAboutSheet) {
+				NavigationStack {
+					AboutSheetView()
 				}
 			}
 			.sheet(isPresented: $showingMailView) {
@@ -268,8 +266,7 @@ struct SupportView: View {
 				ShareSheet(items: shareItems)
 			}
 		}
-		.navigationViewStyle(StackNavigationViewStyle())
-		.accentColor(.red)
+		.tint(.red)
 	}
 	
 	private func shareApp() {
@@ -295,7 +292,7 @@ struct SupportView: View {
 struct MailView: UIViewControllerRepresentable {
 	typealias UIViewControllerType = MFMailComposeViewController
 	
-	@Environment(\.presentationMode) var presentationMode
+	@Environment(\.dismiss) var dismiss
 	var result: (Result<MFMailComposeResult, Error>) -> Void
 	var feedbackType: String
 	var message: String
@@ -335,7 +332,44 @@ struct MailView: UIViewControllerRepresentable {
 			} else {
 				parent.result(.success(result))
 			}
-			parent.presentationMode.wrappedValue.dismiss()
+			parent.dismiss()
+		}
+	}
+}
+
+// MARK: - About sheet view
+struct AboutSheetView: View {
+	@Environment(\.dismiss) private var dismiss
+	var body: some View {
+		NavigationStack {
+			VStack(spacing: 16) {
+				Image("HYF_H")
+					.resizable()
+					.aspectRatio(contentMode: .fit)
+					.frame(width: 96, height: 96)
+					.padding(.top, 20)
+				
+				let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+				let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
+				
+				Text("This app was made for Huntley Youth Football and for the Player Parents to put all resources in their hands.")
+					.font(.body)
+					.multilineTextAlignment(.center)
+					.padding(.horizontal)
+				
+				Text("Version: \(appVersion) (\(buildNumber))")
+					.font(.caption)
+					.foregroundColor(.secondary)
+				
+				Spacer()
+			}
+			.toolbar {
+				ToolbarItem(placement: .topBarTrailing) {
+					Button("Done") {
+						dismiss()
+					}
+				}
+			}
 		}
 	}
 }

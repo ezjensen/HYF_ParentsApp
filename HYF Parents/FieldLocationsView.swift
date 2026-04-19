@@ -65,7 +65,8 @@ struct FieldDetailsView: View {
 			}
 		}
 		.task {
-			await fieldService.loadFields()
+			// loadFields is synchronous (it spawns its own Task) so don't await it
+			fieldService.loadFields()
 			isLoading = false
 		}
 	}

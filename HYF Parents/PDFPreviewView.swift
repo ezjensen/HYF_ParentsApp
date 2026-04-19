@@ -125,60 +125,53 @@ struct PDFKitView: UIViewRepresentable {
 		
 		// Otherwise load it with priority
 		let loadTask = DispatchWorkItem {
-			do {
-				// Add a timeout for network operations
-				let sessionConfig = URLSessionConfiguration.default
-				sessionConfig.timeoutIntervalForRequest = 30.0
-				sessionConfig.timeoutIntervalForResource = 60.0
-				let session = URLSession(configuration: sessionConfig)
-				
-				// Create a data task to download the PDF
-				let downloadTask = session.dataTask(with: url) { data, response, error in
-					if let error = error {
-						DispatchQueue.main.async {
-							self.loadError = error
-							self.isLoading = false
-						}
-						return
+			// Add a timeout for network operations
+			let sessionConfig = URLSessionConfiguration.default
+			sessionConfig.timeoutIntervalForRequest = 30.0
+			sessionConfig.timeoutIntervalForResource = 60.0
+			let session = URLSession(configuration: sessionConfig)
+			
+			// Create a data task to download the PDF
+			let downloadTask = session.dataTask(with: url) { data, response, error in
+				if let error = error {
+					DispatchQueue.main.async {
+						self.loadError = error
+						self.isLoading = false
 					}
-					
-					guard let data = data else {
-						DispatchQueue.main.async {
-							self.loadError = NSError(domain: "PDFKitView", code: 1,
-													 userInfo: [NSLocalizedDescriptionKey: "No data received"])
-							self.isLoading = false
-						}
-						return
-					}
-					
-					// Create document from data
-					if let document = PDFDocument(data: data) {
-						// Cache the document for future use
-						Self.pdfCache.setObject(document, forKey: url as NSURL)
-						
-						// Update UI on the main thread
-						DispatchQueue.main.async {
-							pdfView.document = document
-							self.isLoading = false
-						}
-					} else {
-						DispatchQueue.main.async {
-							self.loadError = NSError(domain: "PDFKitView", code: 2,
-													 userInfo: [NSLocalizedDescriptionKey: "Could not create PDF from data"])
-							self.isLoading = false
-						}
-					}
+					return
 				}
 				
-				// Start the download
-				downloadTask.resume()
+				guard let data = data else {
+					DispatchQueue.main.async {
+						self.loadError = NSError(domain: "PDFKitView", code: 1,
+												 userInfo: [NSLocalizedDescriptionKey: "No data received"])
+						self.isLoading = false
+					}
+					return
+				}
 				
-			} catch {
-				DispatchQueue.main.async {
-					self.loadError = error
-					self.isLoading = false
+				// Create document from data
+				if let document = PDFDocument(data: data) {
+					// Cache the document for future use
+					Self.pdfCache.setObject(document, forKey: url as NSURL)
+					
+					// Update UI on the main thread
+					DispatchQueue.main.async {
+						pdfView.document = document
+						self.isLoading = false
+					}
+				} else {
+					DispatchQueue.main.async {
+						self.loadError = NSError(domain: "PDFKitView", code: 2,
+												 userInfo: [NSLocalizedDescriptionKey: "Could not create PDF from data"])
+						self.isLoading = false
+					}
 				}
 			}
+			
+			// Start the download
+			downloadTask.resume()
+			
 		}
 		
 		// Execute with user-initiated priority

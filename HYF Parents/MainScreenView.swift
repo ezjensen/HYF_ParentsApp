@@ -119,7 +119,7 @@ struct MainScreenView: View {
 					.ignoresSafeArea(edges: .top) // This helps remove the top space
 				}
 			}
-			.navigationBarHidden(true)
+			.toolbar(.hidden, for: .navigationBar)
 			.sheet(isPresented: $showImportantDates) {
 				webViewSheet(title: "Important Dates", url: URL(string: "https://www.huntleyyouthfootball.org/page/show/6967331-important-dates")!)
 			}
@@ -158,10 +158,10 @@ struct MainScreenView: View {
 	private func webViewSheet(title: String, url: URL) -> some View {
 		NavigationStack {
 			WebView(url: url)
-				.navigationBarTitle(title, displayMode: .inline)
+				.navigationTitle(title)
 				.navigationBarTitleDisplayMode(.inline)
 				.toolbar {
-					ToolbarItem(placement: .navigationBarTrailing) {
+					ToolbarItem(placement: .topBarTrailing) {
 						Button("Done") {
 							// Close the appropriate sheet based on title
 							switch title {
@@ -182,7 +182,7 @@ struct MainScreenView: View {
 					}
 				}
 		}
-		.accentColor(.red)
+		.tint(.red)
 	}
 	
 	// MARK: - Button view component

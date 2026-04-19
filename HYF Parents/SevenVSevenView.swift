@@ -42,7 +42,7 @@ struct SevenVSevenView: View {
 	]
 	
 	var body: some View {
-		NavigationView {
+		NavigationStack {
 			ZStack {
 				Color.black.ignoresSafeArea()
 				
@@ -82,9 +82,14 @@ struct SevenVSevenView: View {
 											mainButtonView(image: "icon_Calendar", label: "7v7 \nSchedules", bg: Color.white.opacity(1.0), fg: .black)
 										}
 										.confirmationDialog("Select Division", isPresented: $showingCalendarActionSheet) {
-											Button("K-3") {
-												webViewTitle = "K-3 Schedule"
-												webViewURL = URL(string: scheduleStore.sevenOnSevenK3Link)
+											Button("K-1st") {
+												webViewTitle = "K-1st Schedule"
+												webViewURL = URL(string: scheduleStore.sevenOnSevenK1Link)
+												showingWebView = true
+											}
+											Button("2-3rd") {
+												webViewTitle = "2-3rd Schedule"
+												webViewURL = URL(string: scheduleStore.sevenOnSeven2To3Link)
 												showingWebView = true
 											}
 											Button("4-5th") {
@@ -210,10 +215,10 @@ struct SevenVSevenView: View {
 			}
 			.sheet(isPresented: $showingPDFView) {
 				if let url = selectedRulesURL {
-					NavigationView {
+					NavigationStack {
 						PDFPreviewView(url: url, title: rulesTitle)
 					}
-					.accentColor(.red)
+					.tint(.red)
 				}
 			}
 			.sheet(isPresented: $showingWebView) {
@@ -221,33 +226,43 @@ struct SevenVSevenView: View {
 					webViewSheet(title: webViewTitle, url: url)
 				}
 			}
-			.navigationBarHidden(true)
+			.toolbar(.hidden, for: .navigationBar)
 		}
-		.navigationViewStyle(StackNavigationViewStyle())
+
 	}
 	
 	// MARK: - Helper to create WebView sheet
 	private func webViewSheet(title: String, url: URL) -> some View {
-		NavigationView {
+		NavigationStack {
 			if title.contains("Schedule") {
 				EnhancedWebView(url: url, divToShow: "box5")
-					.navigationBarTitle(title, displayMode: .inline)
-					.navigationBarItems(
-						leading: shareButton(url: url),
-						trailing: Button("Done") {
-							showingWebView = false
+					.navigationTitle(title)
+					.navigationBarTitleDisplayMode(.inline)
+					.toolbar {
+						ToolbarItem(placement: .topBarLeading) {
+							shareButton(url: url)
 						}
-					)
+						ToolbarItem(placement: .topBarTrailing) {
+							Button("Done") {
+								showingWebView = false
+							}
+						}
+					}
 					.preferredColorScheme(.dark)
 			} else {
 				StandardWebView(url: url)
-					.navigationBarTitle(title, displayMode: .inline)
-					.navigationBarItems(trailing: Button("Done") {
-						showingWebView = false
-					})
+					.navigationTitle(title)
+					.navigationBarTitleDisplayMode(.inline)
+					.toolbar {
+						ToolbarItem(placement: .topBarTrailing) {
+							Button("Done") {
+								showingWebView = false
+							}
+						}
+					}
 			}
 		}
-		.accentColor(.red)
+		.tint(.red)
 	}
 	
 	private func shareButton(url: URL) -> some View {

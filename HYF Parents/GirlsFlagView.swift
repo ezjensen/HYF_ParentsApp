@@ -43,7 +43,7 @@ struct GirlsFlagView: View {
 	]
 	
 	var body: some View {
-		NavigationView {
+		NavigationStack {
 			ZStack {
 				Color.black.ignoresSafeArea()
 				
@@ -194,38 +194,48 @@ struct GirlsFlagView: View {
 					.ignoresSafeArea(edges: .top)
 				}
 			}
-			.navigationBarHidden(true)
+			.toolbar(.hidden, for: .navigationBar)
 			.sheet(isPresented: $showingWebView) {
 				if let url = webViewURL {
 					webViewSheet(title: webViewTitle, url: url)
 				}
 			}
 		}
-		.navigationViewStyle(StackNavigationViewStyle())
+
 	}
 	
 	// MARK: - Helper to create WebView sheet
 	private func webViewSheet(title: String, url: URL) -> some View {
-		NavigationView {
+		NavigationStack {
 			if title.contains("Schedule") {
 				EnhancedWebView(url: url, divToShow: "box5")
-					.navigationBarTitle(title, displayMode: .inline)
-					.navigationBarItems(
-						leading: shareButton(url: url),
-						trailing: Button("Done") {
-							showingWebView = false
+					.navigationTitle(title)
+					.navigationBarTitleDisplayMode(.inline)
+					.toolbar {
+						ToolbarItem(placement: .topBarLeading) {
+							shareButton(url: url)
 						}
-					)
+						ToolbarItem(placement: .topBarTrailing) {
+							Button("Done") {
+								showingWebView = false
+							}
+						}
+					}
 					.preferredColorScheme(.dark)
 			} else {
 				StandardWebView(url: url)
-					.navigationBarTitle(title, displayMode: .inline)
-					.navigationBarItems(trailing: Button("Done") {
-						showingWebView = false
-					})
+					.navigationTitle(title)
+					.navigationBarTitleDisplayMode(.inline)
+					.toolbar {
+						ToolbarItem(placement: .topBarTrailing) {
+							Button("Done") {
+								showingWebView = false
+							}
+						}
+					}
 			}
 		}
-		.accentColor(.red)
+		.tint(.red)
 	}
 	
 	private func shareButton(url: URL) -> some View {

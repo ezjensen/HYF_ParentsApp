@@ -11,13 +11,6 @@ import SwiftUI
 struct ContentView: View {
 	@State private var selectedTab = 0
 	@State private var previousTab = 0
-	@State private var showingAbout = false
-	
-	private var aboutMessage: String {
-		let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
-		let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
-		return "This app was made for Huntley Youth Football and for the Player Parents to put all resources in their hands.\n\nVersion: \(appVersion) (\(buildNumber))"
-	}
 	
 	var body: some View {
 		TabView(selection: $selectedTab) {
@@ -35,19 +28,6 @@ struct ContentView: View {
 			}
 			Tab("Weather", systemImage: "cloud.bolt.fill", value: 4) {
 				WeatherAlertsView(selectedTab: $selectedTab)
-			}
-			Tab("About", systemImage: "ellipsis.circle", value: 5) {
-				Color.black.ignoresSafeArea()
-					.onAppear {
-						showingAbout = true
-					}
-					.alert("About HYF Parents", isPresented: $showingAbout) {
-						Button("OK", role: .cancel) {
-							selectedTab = previousTab
-						}
-					} message: {
-						Text(aboutMessage)
-					}
 			}
 		}
 		.tint(.red)

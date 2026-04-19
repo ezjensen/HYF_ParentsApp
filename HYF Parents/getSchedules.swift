@@ -15,7 +15,8 @@ class ScheduleStore: ObservableObject {
 	@Published var girlsFlag6To8Link: String = ""
 	
 	// 7v7 Schedule Links
-	@Published var sevenOnSevenK3Link: String = ""
+	@Published var sevenOnSevenK1Link: String = ""
+	@Published var sevenOnSeven2To3Link: String = ""
 	@Published var sevenOnSeven4To5Link: String = ""
 	@Published var sevenOnSeven6To7Link: String = ""
 	@Published var sevenOnSeven8Link: String = ""
@@ -91,11 +92,18 @@ class ScheduleStore: ObservableObject {
 					// Process 7v7 schedules
 					let sevenVSevenSchedules = allSchedules.filter { $0.program == "7v7" }
 					
-					// K-3 7v7
-					if let schedule = sevenVSevenSchedules.first(where: { $0.programLevel == "K-3" }) {
-						self.sevenOnSevenK3Link = schedule.tcyflLink
+					// K-1st 7v7
+					if let schedule = sevenVSevenSchedules.first(where: { $0.programLevel == "K-1st" }) {
+						self.sevenOnSevenK1Link = schedule.tcyflLink
 					} else {
-						self.sevenOnSevenK3Link = "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=K3"
+						self.sevenOnSevenK1Link = "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=K1"
+					}
+
+					// 2-3rd 7v7
+					if let schedule = sevenVSevenSchedules.first(where: { $0.programLevel == "2-3rd" }) {
+						self.sevenOnSeven2To3Link = schedule.tcyflLink
+					} else {
+						self.sevenOnSeven2To3Link = "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=2-3rd"
 					}
 					
 					// 4-5th 7v7
@@ -226,7 +234,8 @@ class ScheduleStore: ObservableObject {
 					self.girlsFlag6To8Link = "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=6-8th"
 					
 					// Set fallback values for 7v7
-					self.sevenOnSevenK3Link = "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=K3"
+					self.sevenOnSevenK1Link = "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=K1"
+					self.sevenOnSeven2To3Link = "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=2-3rd"
 					self.sevenOnSeven4To5Link = "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=4-5th"
 					self.sevenOnSeven6To7Link = "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=6-7th"
 					self.sevenOnSeven8Link = "https://www.tcyfl.net/TabbedGameSchedulesNEW.php?league=7man&division=8th"

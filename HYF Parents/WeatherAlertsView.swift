@@ -35,7 +35,7 @@ struct WeatherAlertsView: View {
 	@State private var errorMessage: String? = nil
 	
 	var body: some View {
-		NavigationView {
+		NavigationStack {
 			ZStack {
 				Color.black.ignoresSafeArea()
 				
@@ -84,12 +84,12 @@ struct WeatherAlertsView: View {
 					.ignoresSafeArea(edges: .top)
 				}
 			}
-			.navigationBarHidden(true)
+			.toolbar(.hidden, for: .navigationBar)
 			.onAppear {
 				fetchWeatherLocations()
 			}
 		}
-		.navigationViewStyle(StackNavigationViewStyle())
+
 	}
 	
 	private func fetchWeatherLocations() {
