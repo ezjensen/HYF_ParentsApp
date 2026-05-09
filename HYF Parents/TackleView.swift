@@ -15,6 +15,7 @@ struct TackleView: View {
 	@State private var webViewTitle = ""
 	@State private var webViewURL: URL? = nil
 	@State private var showingCalendarActionSheet = false
+	@State private var showingHomeFieldSchedules = false
 	@Binding var selectedTab: Int
 	
 	// Use the shared stores
@@ -190,18 +191,12 @@ struct TackleView: View {
 											}
 										}
 										
-										// Invisible placeholder button
-										Button(action: {}) {
-											VStack(spacing: 8) {
-												Color.clear
-													.frame(width: 70, height: 70)
-												Text("")
-													.font(.headline)
-											}
-											.frame(width: 120, height: 130)
+										// Home Field Schedules
+										Button(action: {
+											showingHomeFieldSchedules = true
+										}) {
+											mainButtonView(image: "icon_Calendar", label: "Home Field\nSchedules", bg: Color.white.opacity(1.0), fg: .black)
 										}
-										.buttonStyle(.plain)
-										.opacity(0)
 									}
 								}
 								.padding(.vertical, 30)
@@ -221,6 +216,9 @@ struct TackleView: View {
 				if let url = webViewURL {
 					webViewSheet(title: webViewTitle, url: url)
 				}
+			}
+			.sheet(isPresented: $showingHomeFieldSchedules) {
+				HomeFieldSchedulesView()
 			}
 		}
 
